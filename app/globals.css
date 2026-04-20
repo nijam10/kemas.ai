@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Ini kuncinya! Kita sambungkan variabel dari layout.tsx ke tema tailwind */
+  /* Menyambungkan variabel font dari layout.tsx ke tema tailwind */
   --font-jakarta: var(--font-jakarta);
   --font-inter: var(--font-inter);
+  
+  /* Utilitas warna brand Kemas.ai */
+  --color-brand-bg: #F8F5F1;
+  --color-brand-gray: #F1F1F1; 
+  --color-brand-accent: #E4AB5A;
+  --color-brand-navy: #1D242D;
+
+  /* Warna Input Field Baru */
+  --color-input-bg: #F8F5F1;
+  --color-input-border: #E5E1DC;
 }
 
 :root {
-  --background: #FAFAFA;
-  --foreground: #18181b;
+  /* Background krem gading yang hangat */
+  --background: #F8F5F1;
+  
+  /* Foreground Navy-Black (Warna tulisan "Elevate") */
+  --foreground: #1D242D; 
+  
+  /* Warna seleksi teks (Amber khas brand) */
+  --selection-bg: #E4AB5A;
+  --selection-text: #ffffff;
 }
 
 @layer base {
+  * {
+    /* Membuat border default lebih halus */
+    @apply border-zinc-200;
+  }
+
   body {
     /* Set INTER sebagai default seluruh body */
     font-family: var(--font-inter), system-ui, sans-serif;
-    @apply antialiased text-zinc-900;
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased;
+    
+    /* Smooth scroll untuk user experience yang lebih baik */
+    scroll-behavior: smooth;
   }
 
   h1, h2, h3, h4, h5, h6 {
     /* Set JAKARTA SANS otomatis untuk semua judul */
     font-family: var(--font-jakarta), sans-serif;
+    color: var(--foreground);
     @apply font-bold tracking-tight;
+  }
+
+  /* Kustomisasi highlight teks saat di-block user */
+  ::selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
+  }
+
+  /* Mengatur scrollbar minimalis agar tidak merusak UI Sidebar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-zinc-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-400;
+  }
+}
+
+@layer utilities {
+  /* Efek kaca untuk label atau card kecil */
+  .glass {
+    @apply bg-white/60 backdrop-blur-md border border-white/40;
+  }
+
+  /* Gaya Input Field Reusable */
+  .input-field {
+    @apply bg-[#F8F5F1] border-2 border-[#E5E1DC] rounded-xl px-4 py-3 
+           text-[#737B8C] placeholder:text-zinc-400 outline-none transition-all
+           focus:border-[#E4AB5A] focus:ring-4 focus:ring-[#E4AB5A]/10;
   }
 }

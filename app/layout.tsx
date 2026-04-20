@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter } from "next/font/google"; // 1. Import fontnya
-import "./globals.css";
+import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import "../globals.css";
 
-// 2. Konfigurasi Plus Jakarta Sans
+// 1. Konfigurasi Plus Jakarta Sans untuk Heading
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-jakarta", // Variabel CSS yang akan dipanggil di globals.css
+  variable: "--font-jakarta",
   display: "swap",
 });
 
-// 3. Konfigurasi Inter
+// 2. Konfigurasi Inter untuk Body Text
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-inter", // Variabel CSS yang akan dipanggil di globals.css
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -27,9 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // 4. Masukkan variabel font ke dalam class name <html> agar bisa diakses seluruh aplikasi
     <html lang="id" className={`${jakarta.variable} ${inter.variable}`}>
-      <body className="antialiased">
+      {/* Menambahkan font variabel ke body sangat penting agar CSS di globals.css 
+        bisa membaca font-family dan warna background/foreground dengan benar.
+      */}
+      <body className="font-inter antialiased">
         {children}
       </body>
     </html>

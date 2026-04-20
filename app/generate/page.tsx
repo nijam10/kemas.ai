@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, ChangeEvent } from "react";
-// Import Navbar dari folder layout
-import Navbar from "../../components/layout/Navbar"; 
+// Navbar dihapus dari import
 import Sidebar from "../../components/generate/Sidebar";
 import PreviewArea from "../../components/generate/PreviewArea";
 
@@ -15,26 +14,23 @@ export default function GeneratePage() {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[#FAFAFA]">
-      {/* 1. Panggil Navbar di paling atas */}
-      <Navbar />
-
-      {/* 2. Container untuk Sidebar dan Preview */}
-      {/* Kita gunakan h-[calc(100vh-64px)] agar tingginya pas (layar penuh dikurangi tinggi navbar 64px) */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Kiri */}
+    // h-screen memastikan konten memenuhi seluruh layar tanpa Navbar
+    <div className="flex h-screen overflow-hidden bg-brand-bg">
+      
+      {/* 1. SIDEBAR (Kiri) */}
+      <aside className="w-96 border-r border-[#E5E1DC] h-full overflow-y-auto shrink-0">
         <Sidebar onChange={handleChange} />
-        
-        {/* Preview Area Kanan */}
+      </aside>
+      
+      {/* 2. PREVIEW AREA (Kanan/Tengah) */}
+      <main className="flex-1 h-full overflow-y-auto relative flex items-center justify-center p-12">
         <PreviewArea data={formData} />
-      </div>
+      </main>
+
     </div>
   );
 }

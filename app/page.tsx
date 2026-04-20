@@ -3,6 +3,7 @@
 import Navbar from "../components/layout/Navbar";
 import Hero from "../components/home/Hero";
 import ExploreGallery from "../components/home/ExploreGallery";
+import Button from "../components/ui/Button";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -10,26 +11,27 @@ export default function LandingPage() {
   const router = useRouter();
 
   return (
-    <main className="relative min-h-screen bg-[#FAFAFA] selection:bg-amber-100 selection:text-amber-900">
-      {/* Pastikan Navbar.tsx ada di components/layout/Navbar.tsx */}
+    <main className="relative min-h-screen bg-brand-bg">
       <Navbar />
 
-      <div className="pointer-events-none absolute top-0 left-0 -z-10 h-[800px] w-full bg-gradient-to-b from-amber-50/50 via-white to-[#FAFAFA]" />
+      <div className="pointer-events-none absolute top-0 left-0 -z-10 h-[800px] w-full bg-gradient-to-b from-amber-50/30 via-white to-brand-bg" />
 
       <Hero />
 
+      {/* Button Create Packaging - Sekarang identik warnanya */}
       <div className="relative z-20 -mt-8 flex justify-center">
-        <button
+        <Button
+          variant="dark"
+          size="lg"
           onClick={() => router.push("/generate")}
-          className="flex items-center gap-2 rounded-full bg-zinc-900 px-8 py-4 text-sm font-medium text-white shadow-2xl transition hover:bg-zinc-800 hover:scale-105 active:scale-95"
+          className="shadow-[0_20px_50px_rgba(29,36,45,0.3)] px-10"
         >
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-4 w-4 text-brand-accent fill-brand-accent/20" />
           Create packaging with AI
-        </button>
+        </Button>
       </div>
 
       <ExploreGallery />
-
       <div className="h-32" />
     </main>
   );
