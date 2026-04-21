@@ -1,64 +1,53 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Menyambungkan variabel font dari layout.tsx ke tema tailwind */
   --font-jakarta: var(--font-jakarta);
   --font-inter: var(--font-inter);
-  
-  /* Utilitas warna brand Kemas.ai */
-  --color-brand-bg: #F8F5F1;
-  --color-brand-gray: #F1F1F1; 
-  --color-brand-accent: #E4AB5A;
-  --color-brand-navy: #1D242D;
 
-  /* Warna Input Field Baru */
+  --color-brand-bg: #F8F5F1;
+  --color-brand-cream: #FAF7F5;
+  --color-brand-gray: #F1F1F1;
+  --color-brand-accent: #E4AB5A;
+  --color-brand-accent-dark: #D49840;
+  --color-brand-navy: #1D242D;
+  --color-brand-navy-light: #272C35;
+  --color-brand-muted: #737B8C;
+
   --color-input-bg: #F8F5F1;
   --color-input-border: #E5E1DC;
 }
 
 :root {
-  /* Background krem gading yang hangat */
   --background: #F8F5F1;
-  
-  /* Foreground Navy-Black (Warna tulisan "Elevate") */
-  --foreground: #1D242D; 
-  
-  /* Warna seleksi teks (Amber khas brand) */
+  --foreground: #1D242D;
   --selection-bg: #E4AB5A;
   --selection-text: #ffffff;
 }
 
 @layer base {
   * {
-    /* Membuat border default lebih halus */
     @apply border-zinc-200;
   }
 
   body {
-    /* Set INTER sebagai default seluruh body */
     font-family: var(--font-inter), system-ui, sans-serif;
     background-color: var(--background);
     color: var(--foreground);
     @apply antialiased;
-    
-    /* Smooth scroll untuk user experience yang lebih baik */
     scroll-behavior: smooth;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    /* Set JAKARTA SANS otomatis untuk semua judul */
     font-family: var(--font-jakarta), sans-serif;
     color: var(--foreground);
     @apply font-bold tracking-tight;
   }
 
-  /* Kustomisasi highlight teks saat di-block user */
   ::selection {
     background-color: var(--selection-bg);
     color: var(--selection-text);
   }
 
-  /* Mengatur scrollbar minimalis agar tidak merusak UI Sidebar */
   ::-webkit-scrollbar {
     width: 6px;
   }
@@ -77,15 +66,51 @@
 }
 
 @layer utilities {
-  /* Efek kaca untuk label atau card kecil */
   .glass {
     @apply bg-white/60 backdrop-blur-md border border-white/40;
   }
 
-  /* Gaya Input Field Reusable */
+  .glass-strong {
+    @apply bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg;
+  }
+
   .input-field {
-    @apply bg-[#F8F5F1] border-2 border-[#E5E1DC] rounded-xl px-4 py-3 
-           text-[#737B8C] placeholder:text-zinc-400 outline-none transition-all
+    @apply bg-[#F8F5F1] border-2 border-[#E5E1DC] rounded-xl px-4 py-3
+           text-[#272C35] placeholder:text-zinc-400 outline-none transition-all duration-300
            focus:border-[#E4AB5A] focus:ring-4 focus:ring-[#E4AB5A]/10;
   }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#E4AB5A] to-[#D49840];
+  }
+
+  .card-hover {
+    @apply transition-all duration-500 hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      110deg,
+      transparent 25%,
+      rgba(228, 171, 90, 0.08) 37%,
+      transparent 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(var(--rotate, 0deg)); }
+  50% { transform: translateY(-12px) rotate(var(--rotate, 0deg)); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(228, 171, 90, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(228, 171, 90, 0.3); }
 }
