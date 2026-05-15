@@ -3,7 +3,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, Lock, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import Button from "@/components/ui/Button";
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -128,9 +127,12 @@ export default function SignInModal({ isOpen, onClose }: SignInModalProps) {
                   </div>
                 </div>
 
-                <Button variant="dark" size="lg" className="w-full rounded-xl mt-2">
+                <button
+                  type="submit"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#1A1A1A] text-white font-semibold rounded-xl hover:bg-[#2A2A2A] transition-colors mt-2"
+                >
                   Sign In <ArrowRight className="w-4 h-4" />
-                </Button>
+                </button>
               </form>
 
               <p className="text-[11px] text-zinc-400 text-center mt-8">

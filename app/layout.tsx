@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import "./globals.css";
+import "@/styles/globals.css";
+import { SessionProvider } from "next-auth/react";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -27,7 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${jakarta.variable} ${inter.variable}`}>
-      <body className="font-inter antialiased">{children}</body>
+      <body className="font-inter antialiased bg-[#FCFBF7] text-[#1A1A1A]">
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }
