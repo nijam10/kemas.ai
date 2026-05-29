@@ -226,20 +226,46 @@ export default function HistoryPage() {
                 >
                   {/* Preview Image */}
                   <div className="relative aspect-[3/4] bg-gradient-to-br from-[#FCFBF7] to-[#F5F5F0] flex items-center justify-center overflow-hidden">
-                    <div className="relative">
-                      <div className="w-32 h-40 bg-gradient-to-br from-[#F97316] to-[#FACC15] rounded-2xl shadow-xl flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
-                        <Package className="w-16 h-16 text-white" />
+                    {/* Show real image if available, otherwise placeholder */}
+                    {(data?.designs.find(d => d.id === item.id)?.thumbnailUrl) ? (
+                      <img
+                        src={data!.designs.find(d => d.id === item.id)!.thumbnailUrl!}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="relative">
+                        <div className="w-32 h-40 bg-gradient-to-br from-[#F97316] to-[#FACC15] rounded-2xl shadow-xl flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
+                          <Package className="w-16 h-16 text-white" />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Top Badges */}
                     <div className="absolute top-3 right-3 flex flex-col gap-2">
                       <span className="px-2.5 py-1 bg-white/95 backdrop-blur-sm border border-[#E5E4E0] rounded-full text-xs font-semibold text-[#1A1A1A]">
                         {item.type}
                       </span>
-                      <span className="px-2.5 py-1 bg-[#FACC15]/95 backdrop-blur-sm border border-[#FACC15]/20 rounded-full text-xs font-semibold text-[#1A1A1A]">
-                        Export Ready
-                      </span>
+                      {/* Real status badge */}
+                      {(() => {
+                        const realStatus = data?.designs.find(d => d.id === item.id)?.status;
+                        if (realStatus === "COMPLETED") return (
+                          <span className="px-2.5 py-1 bg-green-100 border border-green-200 rounded-full text-xs font-semibold text-green-700">
+                            Completed
+                          </span>
+                        );
+                        if (realStatus === "PROCESSING") return (
+                          <span className="px-2.5 py-1 bg-[#F97316]/10 border border-[#F97316]/20 rounded-full text-xs font-semibold text-[#F97316]">
+                            Processing
+                          </span>
+                        );
+                        if (realStatus === "FAILED") return (
+                          <span className="px-2.5 py-1 bg-red-100 border border-red-200 rounded-full text-xs font-semibold text-red-700">
+                            Failed
+                          </span>
+                        );
+                        return null;
+                      })()}
                     </div>
 
                     {/* Hover Actions Overlay */}

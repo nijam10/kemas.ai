@@ -1,0 +1,145 @@
+{
+  "24": {
+    "inputs": {
+      "lora_name": "KemasAI_Final.safetensors",
+      "strength_model": 1,
+      "strength_clip": 1,
+      "model": ["25", 0],
+      "clip": ["26", 0]
+    },
+    "class_type": "LoraLoader",
+    "_meta": { "title": "Load LoRA (Model and CLIP)" }
+  },
+  "25": {
+    "inputs": {
+      "unet_name": "flux1-dev-fp8.safetensors",
+      "weight_dtype": "fp8_e4m3fn"
+    },
+    "class_type": "UNETLoader",
+    "_meta": { "title": "Load Diffusion Model" }
+  },
+  "26": {
+    "inputs": {
+      "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": { "title": "DualCLIPLoader" }
+  },
+  "28": {
+    "inputs": {
+      "seed": 1102921178894643,
+      "steps": 35,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": ["24", 0],
+      "positive": ["29", 0],
+      "negative": ["30", 0],
+      "latent_image": ["32", 0]
+    },
+    "class_type": "KSampler",
+    "_meta": { "title": "KSampler" }
+  },
+  "29": {
+    "inputs": {
+      "text": "KEMAS_PROMPT_PLACEHOLDER",
+      "clip": ["24", 1]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "CLIP Text Encode (Prompt)" }
+  },
+  "30": {
+    "inputs": {
+      "text": "small text, letters, words, typography, watermark, blurry, low quality, deformed",
+      "clip": ["24", 1]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "CLIP Text Encode (Prompt)" }
+  },
+  "32": {
+    "inputs": {
+      "width": 768,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": { "title": "Empty Latent Image" }
+  },
+  "33": {
+    "inputs": {
+      "samples": ["28", 0],
+      "vae": ["34", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": { "title": "VAE Decode" }
+  },
+  "34": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": { "title": "Load VAE" }
+  },
+  "35": {
+    "inputs": {
+      "images": ["33", 0]
+    },
+    "class_type": "PreviewImage",
+    "_meta": { "title": "Preview Image (base, before logo)" }
+  },
+  "54": {
+    "inputs": {
+      "opacity": 0.85,
+      "logo_scale": 0.8,
+      "search_height_ratio": 0.6,
+      "feather": 1.4,
+      "shadow_strength": 0.18,
+      "invert_mask": true,
+      "base_image": ["33", 0],
+      "logo_image": ["57", 0],
+      "logo_mask": ["59", 1]
+    },
+    "class_type": "KemasSmartLogoPlacement",
+    "_meta": { "title": "Kemas Smart Logo Placement" }
+  },
+  "57": {
+    "inputs": {
+      "image": "KEMAS_LOGO_PLACEHOLDER"
+    },
+    "class_type": "LoadImage",
+    "_meta": { "title": "Load Image (Logo)" }
+  },
+  "59": {
+    "inputs": {
+      "image": "example.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": { "title": "Load Image (Mask)" }
+  },
+  "60": {
+    "inputs": {
+      "images": ["54", 0]
+    },
+    "class_type": "PreviewImage",
+    "_meta": { "title": "Preview Image (final with logo)" }
+  },
+  "61": {
+    "inputs": {
+      "images": ["54", 1]
+    },
+    "class_type": "PreviewImage",
+    "_meta": { "title": "Preview Image (logo mask)" }
+  },
+  "62": {
+    "inputs": {
+      "filename_prefix": "kemas_output",
+      "images": ["54", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": { "title": "Save Final Output (after logo placement)" }
+  }
+}
