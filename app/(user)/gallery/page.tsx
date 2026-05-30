@@ -1,387 +1,268 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { useState, useMemo, useEffect } from "react";
 import AuthNavbar from "@/components/layout/auth-navbar";
-import { Package, Search, ArrowRight, Sparkles } from "lucide-react";
+import TemplateCard from "@/components/gallery/template-card";
+import TemplateDetailModal from "@/components/gallery/template-detail-modal";
+import PackagingTypeFilter, {
+  packagingTypeLabel,
+} from "@/components/gallery/packaging-type-filter";
+import GalleryPagination from "@/components/gallery/gallery-pagination";
+import { GALLERY_TEMPLATES, type PackagingTemplate } from "@/lib/gallery-templates";
+import { useFavorites } from "@/lib/use-favorites";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useGallery } from "@/hooks/use-gallery";
-import type { ApiGalleryTemplate } from "@/lib/api-client";
+import {
+  Package,
+  Search,
+  SlidersHorizontal,
+  ChevronDown,
+  Sparkles,
+} from "lucide-react";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 12;
 
-function formatCategory(raw: string) {
-  return raw.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-}
+type SortBy = "popular" | "newest" | "most-used";
 
-function formatPackagingLabel(raw: string) {
-  return raw.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-}
-
-// ── Skeleton card ─────────────────────────────────────────────────────────────
-
-function SkeletonCard() {
-  return (
-    <div className="bg-white border border-[#E5E4E0] rounded-2xl overflow-hidden animate-pulse">
-      <div className="aspect-[3/4] bg-[#F5F5F0]" />
-      <div className="p-5 space-y-3">
-        <div className="h-3 bg-[#F5F5F0] rounded w-1/2" />
-        <div className="h-4 bg-[#F5F5F0] rounded w-3/4" />
-        <div className="h-3 bg-[#F5F5F0] rounded w-full" />
-        <div className="h-9 bg-[#F5F5F0] rounded-lg mt-4" />
-      </div>
-    </div>
-  );
-}
-
-const categories = [
-  "All",
-  "Food Beverages",
-  "Artisan Snack",
-  "Modern Minimal",
-  "Traditional",
-  "Organic",
-  "Premium Coffee",
-  "Healthy Products",
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: "popular", label: "Most Popular" },
+  { value: "newest", label: "Newest" },
+  { value: "most-used", label: "Most Used" },
 ];
 
 export default function GalleryPage() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const { toast, toasts } = useToast();
+  const { isFavorite, toggleFavorite } = useFavorites();
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState<ApiGalleryTemplate | null>(null);
-  const router = useRouter();
+  const [selectedPackagingType, setSelectedPackagingType] = useState("all");
+  const [sortBy, setSortBy] = useState<SortBy>("popular");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<PackagingTemplate | null>(null);
 
-  // ── Fetch from API ────────────────────────────────────────────────────────
-  const { data, loading, error } = useGallery();
-  const templates: ApiGalleryTemplate[] = data?.templates ?? [];
-
-  // ── Derived display list ──────────────────────────────────────────────────
-  const filteredTemplates = useMemo(() => {
-    return templates.filter((t) => {
-      const cat = formatCategory(t.category);
-      const matchesCategory = selectedCategory === "All" || cat === selectedCategory;
+  // ── Filter → sort → paginate ──────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return GALLERY_TEMPLATES.filter((t) => {
+      const matchesType =
+        selectedPackagingType === "all" ||
+        t.packagingType === selectedPackagingType;
       const matchesSearch =
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.description ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cat.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+        q === "" ||
+        t.name.toLowerCase().includes(q) ||
+        packagingTypeLabel(t.packagingType).toLowerCase().includes(q);
+      return matchesType && matchesSearch;
     });
-  }, [templates, selectedCategory, searchQuery]);
+  }, [searchQuery, selectedPackagingType]);
 
-  const featuredTemplate = templates.find((t) => t.isFeatured);
-  const regularTemplates = filteredTemplates.filter((t) => !t.isFeatured);
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    switch (sortBy) {
+      case "newest":
+        list.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        break;
+      case "most-used":
+        list.sort((a, b) => b.usageCount - a.usageCount);
+        break;
+      case "popular":
+      default:
+        list.sort((a, b) => {
+          const aPop = a.badge === "popular" ? 1 : 0;
+          const bPop = b.badge === "popular" ? 1 : 0;
+          if (bPop !== aPop) return bPop - aPop;
+          return b.usageCount - a.usageCount;
+        });
+        break;
+    }
+    return list;
+  }, [filtered, sortBy]);
 
-  const handleUseTemplate = (template: ApiGalleryTemplate) => {
-    router.push(`/generate?template=${template.id}`);
-  };
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const pageSlice = useMemo(
+    () =>
+      sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [sorted, currentPage]
+  );
+
+  // Reset to page 1 whenever the result set changes.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedPackagingType, sortBy]);
+
+  const activeSortLabel =
+    SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Most Popular";
 
   return (
     <div className="min-h-screen bg-[#FCFBF7]">
       <AuthNavbar />
 
-      <div className="container mx-auto px-6 py-12 max-w-7xl">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-12"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F97316] to-[#FACC15] flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
+        {/* Hero */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F97316] to-[#FACC15] flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-[#1A1A1A]">
+            <h1 className="text-3xl font-bold text-[#1A1A1A]">
               Packaging Style Gallery
             </h1>
           </div>
-          <p className="text-lg text-[#737373] max-w-3xl mb-3">
-            Explore curated packaging aesthetics crafted for Indonesian UMKM brands.
+          <p className="text-[#737373] max-w-3xl">
+            Explore curated snack packaging aesthetics crafted for Indonesian
+            UMKM brands.
           </p>
-          <p className="text-sm text-[#A3A3A3] max-w-2xl">
-            Reuse proven visual directions and customize them with your own product and logo.
+          <p className="text-sm text-[#A3A3A3] max-w-2xl mt-1">
+            Reuse proven visual directions and customize them with your own
+            product and logo.
           </p>
-        </motion.div>
+        </div>
 
-        {/* Search & Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-12 space-y-6"
-        >
-          {/* Search Bar */}
-          <div className="relative max-w-md">
+        {/* Search + Filters row */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A3A3A3]" />
             <input
               type="text"
-              placeholder="Search templates..."
+              placeholder="Search templates by name, style, or color..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm text-[#1A1A1A] placeholder:text-[#A3A3A3] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5E4E0] rounded-full text-sm text-[#1A1A1A] placeholder:text-[#A3A3A3] focus:outline-none focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316] transition-all duration-300 ease-out"
             />
           </div>
-
-          {/* Category Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
-                  selectedCategory === category
-                    ? "bg-[#F97316] text-white shadow-sm"
-                    : "bg-white border border-[#E5E4E0] text-[#737373] hover:border-[#F97316]/40 hover:text-[#1A1A1A]"
-                )}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Featured Template */}
-        {!loading && featuredTemplate && selectedCategory === "All" && !searchQuery && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-16"
+          <button
+            type="button"
+            onClick={() => toast("Coming soon", "info")}
+            className="inline-flex items-center gap-2 px-5 py-3 bg-white border border-[#E5E4E0] rounded-full text-sm font-medium text-[#737373] hover:border-[#F97316]/70 hover:text-[#1A1A1A] transition-all duration-300 ease-out"
           >
-            <div className="bg-white border border-[#E5E4E0] rounded-2xl overflow-hidden hover:shadow-xl hover:border-[#F97316]/40 transition-all duration-300 group">
-              <div className="grid md:grid-cols-2 gap-8 p-8">
-                {/* Image */}
-                <div className="relative aspect-[3/4] bg-gradient-to-br from-[#F97316]/10 to-[#FACC15]/10 rounded-xl overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center p-12">
-                    <div className="w-full h-full bg-gradient-to-br from-[#F97316] to-[#FACC15] rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-500 flex items-center justify-center">
-                      <Package className="w-24 h-24 text-white opacity-50" />
-                    </div>
-                  </div>
-                  <div className="absolute top-4 left-4 px-3 py-1 bg-[#F97316] text-white text-xs font-semibold rounded-full">
-                    Featured
-                  </div>
-                </div>
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+          </button>
+        </div>
 
-                {/* Content */}
-                <div className="flex flex-col justify-center">
-                  <div className="mb-4">
-                    <span className="px-3 py-1 bg-[#F97316]/10 border border-[#F97316]/20 rounded-full text-xs font-semibold text-[#F97316]">
-                      {formatCategory(featuredTemplate.category)}
-                    </span>
-                  </div>
-                  <h2 className="text-3xl font-bold text-[#1A1A1A] mb-3">
-                    {featuredTemplate.title}
-                  </h2>
-                  <p className="text-base text-[#737373] mb-4 leading-relaxed">
-                    {featuredTemplate.description ?? featuredTemplate.promptPreset}
-                  </p>
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-[#A3A3A3]">Packaging Type:</span>
-                      <span className="font-medium text-[#1A1A1A]">{formatPackagingLabel(featuredTemplate.packagingType)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-[#A3A3A3]">Color Mood:</span>
-                      <span className="font-medium text-[#1A1A1A]">{featuredTemplate.colorMood ?? "Warm tones"}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleUseTemplate(featuredTemplate)}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#F97316]/90 text-white rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md group"
-                  >
-                    Use This Template
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Packaging Type filter */}
+        <div className="mb-6">
+          <PackagingTypeFilter
+            selected={selectedPackagingType}
+            onSelect={setSelectedPackagingType}
+          />
+        </div>
 
-        {/* Template Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {regularTemplates.map((template, index) => (
-              <motion.div
-                key={template.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 * index }}
-                className="bg-white border border-[#E5E4E0] rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#F97316]/40 transition-all duration-300 group cursor-pointer"
-                onClick={() => setSelectedTemplate(template)}
+        {/* Sort + count bar */}
+        <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#E5E4E0]">
+          <p className="text-sm text-[#737373]">
+            Showing{" "}
+            <span className="font-semibold text-[#1A1A1A]">
+              {sorted.length}
+            </span>{" "}
+            templates
+          </p>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[#737373]">Sort by</span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setSortMenuOpen((o) => !o)}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#E5E4E0] rounded-lg text-sm font-medium text-[#1A1A1A] hover:border-[#F97316]/70 transition-all duration-300 ease-out"
               >
-                {/* Image */}
-                <div className="relative aspect-[3/4] bg-gradient-to-br from-[#F5F5F0] to-[#FCFBF7] overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center p-8">
-                    <div className="w-full h-full bg-gradient-to-br from-[#F97316]/20 to-[#FACC15]/20 rounded-xl transform group-hover:scale-105 transition-transform duration-500 flex items-center justify-center">
-                      <Package className="w-16 h-16 text-[#F97316]/40" />
-                    </div>
+                {activeSortLabel}
+                <ChevronDown
+                  className={cn(
+                    "w-4 h-4 text-[#737373] transition-transform duration-300 ease-out",
+                    sortMenuOpen && "rotate-180"
+                  )}
+                />
+              </button>
+              {sortMenuOpen && (
+                <>
+                  {/* Click-away overlay */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setSortMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-44 z-20 bg-white border border-[#E5E4E0] rounded-lg shadow-md overflow-hidden">
+                    {SORT_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          setSortBy(option.value);
+                          setSortMenuOpen(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-sm transition-all duration-300 ease-out",
+                          sortBy === option.value
+                            ? "bg-[#F97316]/10 text-[#F97316] font-semibold"
+                            : "text-[#737373] hover:bg-[#FCFBF7] hover:text-[#1A1A1A]"
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
                   </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2 py-1 bg-[#F97316]/10 border border-[#F97316]/20 rounded text-xs font-semibold text-[#F97316]">
-                      {formatCategory(template.category)}
-                    </span>
-                    <span className="text-xs text-[#A3A3A3]">
-                      {formatPackagingLabel(template.packagingType)}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">
-                    {template.title}
-                  </h3>
-                  <p className="text-sm text-[#737373] mb-4 line-clamp-2">
-                    {template.description ?? template.promptPreset.substring(0, 80)}
-                  </p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleUseTemplate(template);
-                    }}
-                    className="w-full px-4 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F97316] hover:border-[#F97316] hover:text-white text-[#1A1A1A] rounded-lg text-sm font-semibold transition-all duration-200"
-                  >
-                    Use Template
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                </>
+              )}
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Empty State */}
-        {filteredTemplates.length === 0 && (
+        {/* Template grid / empty state */}
+        {sorted.length === 0 ? (
           <div className="text-center py-16">
-            <Package className="w-16 h-16 mx-auto mb-4 text-[#A3A3A3]" />
-            <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">
+            <Package className="w-12 h-12 mx-auto mb-3 text-[#A3A3A3]" />
+            <h3 className="text-lg font-bold text-[#1A1A1A] mb-1">
               No templates found
             </h3>
             <p className="text-sm text-[#737373]">
               Try adjusting your search or filter
             </p>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[14px] mb-8">
+            {pageSlice.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                isFavorite={isFavorite(template.id)}
+                onToggleFavorite={toggleFavorite}
+                onOpen={setSelectedTemplate}
+              />
+            ))}
+          </div>
         )}
 
-        {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="relative bg-gradient-to-br from-[#F97316] to-[#FACC15] rounded-2xl p-12 overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
-          
-          <div className="relative z-10 text-center">
-            <h2 className="text-3xl font-bold text-white mb-3">
-              Ready to create your own packaging?
-            </h2>
-            <p className="text-lg text-white/90 mb-6 max-w-2xl mx-auto">
-              Start with a template or create from scratch
-            </p>
-            <button
-              onClick={() => router.push("/generate")}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-white text-[#F97316] rounded-xl font-bold hover:shadow-xl transition-all duration-200"
-            >
-              Start Generating
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
-        </motion.div>
+        {/* Pagination */}
+        <div className="mb-12">
+          <GalleryPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
 
-      {/* Template Preview Modal */}
-      {selectedTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-[#1A1A1A]/60 backdrop-blur-sm"
-            onClick={() => setSelectedTemplate(null)}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden"
-          >
-            <div className="p-8">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <span className="px-3 py-1 bg-[#F97316]/10 border border-[#F97316]/20 rounded-full text-xs font-semibold text-[#F97316]">
-                    {formatCategory(selectedTemplate.category)}
-                  </span>
-                  <h3 className="text-2xl font-bold text-[#1A1A1A] mt-3 mb-2">
-                    {selectedTemplate.title}
-                  </h3>
-                  <p className="text-sm text-[#A3A3A3]">
-                    {formatPackagingLabel(selectedTemplate.packagingType)}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedTemplate(null)}
-                  className="w-8 h-8 rounded-lg hover:bg-[#E5E4E0] flex items-center justify-center transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
+      {/* Template detail modal */}
+      <TemplateDetailModal
+        template={selectedTemplate}
+        onClose={() => setSelectedTemplate(null)}
+      />
 
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div className="aspect-[3/4] bg-gradient-to-br from-[#F5F5F0] to-[#FCFBF7] rounded-xl flex items-center justify-center">
-                  <div className="w-3/4 h-3/4 bg-gradient-to-br from-[#F97316] to-[#FACC15] rounded-xl shadow-2xl flex items-center justify-center">
-                    <Package className="w-20 h-20 text-white opacity-50" />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#1A1A1A] mb-2">
-                      Style Description
-                    </h4>
-                    <p className="text-sm text-[#737373] leading-relaxed">
-                      {selectedTemplate.description ?? selectedTemplate.promptPreset}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#1A1A1A] mb-2">
-                      Color Mood
-                    </h4>
-                    <p className="text-sm text-[#737373]">
-                      {selectedTemplate.colorMood ?? "Warm tones"}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#1A1A1A] mb-2">
-                      Packaging Type
-                    </h4>
-                    <p className="text-sm text-[#737373]">
-                      {formatPackagingLabel(selectedTemplate.packagingType)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-[#E5E4E0]">
-                <button
-                  onClick={() => handleUseTemplate(selectedTemplate)}
-                  className="w-full px-6 py-3 bg-[#F97316] hover:bg-[#F97316]/90 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  Use This Template
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-                <p className="text-xs text-center text-[#737373] mt-3">
-                  This will redirect you to Generate page with pre-filled settings
-                </p>
-              </div>
+      {/* Toast container (in-memory, from useToast) */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className="px-4 py-2.5 bg-[#1A1A1A] text-white text-sm font-medium rounded-lg shadow-md"
+            >
+              {t.message}
             </div>
-          </motion.div>
+          ))}
         </div>
       )}
     </div>

@@ -7,8 +7,9 @@ import PromptPanel from "@/components/generation/prompt-panel";
 import LogoUpload from "@/components/generation/logo-upload";
 import PackagingTypeSelector from "@/components/generation/packaging-type-selector";
 import GenerationPipeline from "@/components/generation/generation-pipeline";
-import RecentHistoryPanel from "@/components/generation/recent-history-panel";
+import OutputSettingsPanel from "@/components/generation/output-settings-panel";
 import { useCredits } from "@/hooks/use-credits";
+import { calculateCredits, type OutputFormat, type Resolution } from "@/lib/credits";
 import { Package, AlertCircle, Loader2 } from "lucide-react";
 
 type SubmitState = "idle" | "submitting" | "error";
@@ -20,12 +21,18 @@ export default function GeneratePage() {
   const [prompt, setPrompt] = useState("");
   const [logo, setLogo] = useState<File | null>(null);
   const [packagingType, setPackagingType] = useState("standing-pouch");
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>("2d");
+  const [resolution, setResolution] = useState<Resolution>("standard");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const balance = creditsData?.balance ?? 0;
+  const totalCredits = calculateCredits({
+    format: outputFormat,
+    resolution,
+  });
   const canGenerate =
-    prompt.trim().length >= 10 && packagingType && balance >= 10;
+    prompt.trim().length >= 10 && packagingType && balance >= totalCredits;
 
   const handleGenerate = async () => {
     if (!canGenerate || submitState === "submitting") return;
@@ -70,12 +77,12 @@ export default function GeneratePage() {
     <div className="min-h-screen bg-[#FCFBF7]">
       <AuthNavbar />
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-6">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F97316] to-[#FACC15] flex items-center justify-center">
-              <Package className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F97316] to-[#FACC15] flex items-center justify-center">
+              <Package className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-[#1A1A1A]">
@@ -87,18 +94,18 @@ export default function GeneratePage() {
             Describe your product, upload your logo, choose a packaging format,
             and let Kemas.ai generate a market-ready visual concept.
           </p>
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-[#F97316]/10 border border-[#F97316]/20 rounded-full">
+          <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 bg-[#F97316]/10 border border-[#F97316]/20 rounded-full">
             <span className="text-xs font-semibold text-[#1A1A1A]">
-              10 credits per generation
+              Starts at 10 credits per generation
             </span>
           </div>
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Left Column — Input Controls */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white border border-[#E5E4E0] rounded-2xl p-6 space-y-6">
+            <div className="bg-white border border-[#E5E4E0] rounded-2xl p-5 space-y-4">
               <PromptPanel value={prompt} onChange={setPrompt} />
               <LogoUpload onUpload={setLogo} />
               <PackagingTypeSelector
@@ -126,16 +133,16 @@ export default function GeneratePage() {
                       <Loader2 className="w-5 h-5 animate-spin" />
                       Submitting…
                     </>
-                  ) : balance < 10 ? (
+                  ) : balance < totalCredits ? (
                     "Not enough credits"
                   ) : (
-                    "Generate Design"
+                    `Generate Design · ${totalCredits} credits`
                   )}
                 </button>
                 <p className="text-xs text-center text-[#737373] mt-2">
-                  {balance >= 10
-                    ? "Credits are deducted only after successful generation"
-                    : `You need ${10 - balance} more credits to generate`}
+                  {balance >= totalCredits
+                    ? `${totalCredits} credits will be deducted only after successful generation`
+                    : `You need ${totalCredits - balance} more credits to generate`}
                 </p>
               </div>
             </div>
@@ -143,13 +150,13 @@ export default function GeneratePage() {
 
           {/* Center Column — Status / Idle */}
           <div className="lg:col-span-5">
-            <div className="bg-white border border-[#E5E4E0] rounded-2xl p-12 h-full flex items-center justify-center">
+            <div className="bg-white border border-[#E5E4E0] rounded-2xl p-8 h-full flex items-center justify-center">
               {submitState === "submitting" ? (
                 <div className="text-center max-w-md">
-                  <div className="w-32 h-32 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#F97316]/10 to-[#FACC15]/10 flex items-center justify-center">
-                    <Package className="w-16 h-16 text-[#F97316] animate-pulse" />
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#F97316]/10 to-[#FACC15]/10 flex items-center justify-center">
+                    <Package className="w-12 h-12 text-[#F97316] animate-pulse" />
                   </div>
-                  <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">
+                  <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">
                     Submitting your request…
                   </h3>
                   <p className="text-sm text-[#737373]">
@@ -159,10 +166,10 @@ export default function GeneratePage() {
                 </div>
               ) : (
                 <div className="text-center max-w-md">
-                  <div className="w-32 h-32 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#F97316]/10 to-[#FACC15]/10 flex items-center justify-center">
-                    <Package className="w-16 h-16 text-[#F97316]/40" />
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#F97316]/10 to-[#FACC15]/10 flex items-center justify-center">
+                    <Package className="w-12 h-12 text-[#F97316]/40" />
                   </div>
-                  <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">
+                  <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">
                     Your generated packaging will appear here
                   </h3>
                   <p className="text-sm text-[#737373]">
@@ -174,14 +181,20 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          {/* Right Column — Recent History */}
+          {/* Right Column — Output Settings */}
           <div className="lg:col-span-3">
-            <RecentHistoryPanel />
+            <OutputSettingsPanel
+              format={outputFormat}
+              resolution={resolution}
+              totalCredits={totalCredits}
+              onFormatChange={setOutputFormat}
+              onResolutionChange={setResolution}
+            />
           </div>
         </div>
 
         {/* Generation Pipeline — informational */}
-        <div className="mt-6">
+        <div className="mt-4">
           <GenerationPipeline
             isActive={submitState === "submitting"}
             onComplete={() => {}}

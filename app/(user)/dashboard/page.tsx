@@ -170,8 +170,8 @@ export default function DashboardPage() {
                   <Package className="w-16 h-16 mx-auto mb-4 text-[#A3A3A3]" />
                   <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">No designs yet</h3>
                   <p className="text-sm text-[#737373] mb-6">Generate your first packaging design to see it here.</p>
-                  <button onClick={() => router.push("/generate")} className="px-6 py-3 bg-[#F97316] text-white rounded-xl font-semibold hover:bg-[#F97316]/90 transition-all">
-                    Start Generating
+                  <button onClick={() => router.push("/generate")} className="px-6 py-3 border-2 border-[#F97316] text-[#F97316] bg-white rounded-xl font-semibold hover:bg-[#F97316]/5 transition-all">
+                    Generate your first design
                   </button>
                 </div>
               ) : (

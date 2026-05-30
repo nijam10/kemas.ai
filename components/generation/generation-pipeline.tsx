@@ -125,8 +125,8 @@ export default function GenerationPipeline({ isActive, onComplete }: GenerationP
   };
 
   return (
-    <div className="bg-white border border-[#E5E4E0] rounded-2xl p-6">
-      <div className="mb-6">
+    <div className="bg-white border border-[#E5E4E0] rounded-2xl p-5">
+      <div className="mb-4">
         <h3 className="text-lg font-bold text-[#1A1A1A] mb-1">
           Live Generation Flow
         </h3>
@@ -153,7 +153,7 @@ export default function GenerationPipeline({ isActive, onComplete }: GenerationP
           </div>
 
           {/* Nodes */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-3">
             {pipelineNodes.map((node, index) => {
               const state = getNodeState(node.id);
               const Icon = node.icon;
@@ -162,7 +162,7 @@ export default function GenerationPipeline({ isActive, onComplete }: GenerationP
                 <div key={node.id} className="relative">
                   <div
                     className={cn(
-                      "relative z-10 bg-white border-2 rounded-xl p-4 transition-all duration-300",
+                      "relative z-10 bg-white border-2 rounded-xl p-3 transition-all duration-300",
                       state === "active" && "border-[#F97316] shadow-lg shadow-[#F97316]/20",
                       state === "completed" && "border-[#FACC15] bg-[#FACC15]/5",
                       state === "pending" && "border-[#E5E4E0] opacity-50"
@@ -171,16 +171,16 @@ export default function GenerationPipeline({ isActive, onComplete }: GenerationP
                     <div className="flex items-start gap-3 mb-2">
                       <div
                         className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
+                          "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors",
                           state === "active" && "bg-[#F97316]/10 text-[#F97316]",
                           state === "completed" && "bg-[#FACC15]/10 text-[#FACC15]",
                           state === "pending" && "bg-[#E5E4E0] text-[#A3A3A3]"
                         )}
                       >
                         {state === "completed" ? (
-                          <CheckCircle className="w-5 h-5" />
+                          <CheckCircle className="w-4 h-4" />
                         ) : (
-                          <Icon className="w-5 h-5" />
+                          <Icon className="w-4 h-4" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -206,7 +206,7 @@ export default function GenerationPipeline({ isActive, onComplete }: GenerationP
                         )}
                       </div>
                     </div>
-                    <p className="text-xs text-[#737373] leading-relaxed">
+                    <p className="text-xs text-[#737373] leading-relaxed line-clamp-1">
                       {node.description}
                     </p>
                   </div>

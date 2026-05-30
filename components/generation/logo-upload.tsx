@@ -67,10 +67,10 @@ export default function LogoUpload({ onUpload }: LogoUploadProps) {
       {!preview ? (
         <button
           onClick={handleClick}
-          className="w-full p-8 border-2 border-dashed border-[#E5E4E0] rounded-xl bg-white hover:border-[#F97316]/40 hover:bg-[#F97316]/5 transition-all duration-200 group"
+          className="w-full p-6 border-2 border-dashed border-[#E5E4E0] rounded-xl bg-white hover:border-[#F97316]/40 hover:bg-[#F97316]/5 transition-all duration-200 group"
         >
           <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#F97316]/10 flex items-center justify-center group-hover:bg-[#F97316]/20 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-[#F97316]/10 flex items-center justify-center group-hover:bg-[#F97316]/20 transition-colors">
               <Upload className="w-5 h-5 text-[#F97316]" />
             </div>
             <div className="text-center">

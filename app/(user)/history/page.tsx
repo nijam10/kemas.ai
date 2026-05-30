@@ -4,6 +4,11 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import AuthNavbar from "@/components/layout/auth-navbar";
+import HistoryTabs, { type HistoryTab } from "@/components/history/history-tabs";
+import FavoritesSection from "@/components/history/favorites-section";
+import TemplateDetailModal from "@/components/gallery/template-detail-modal";
+import { useFavorites } from "@/lib/use-favorites";
+import type { PackagingTemplate } from "@/lib/gallery-templates";
 import {
   Package,
   Download,
@@ -18,6 +23,10 @@ import {
 } from "lucide-react";
 import { useDesigns } from "@/hooks/use-designs";
 import type { ApiDesign } from "@/lib/api-client";
+
+// Nominal weekly credit budget used only to derive the "This Week" bar width.
+// The hard guarantee is 0% at 0 credits and a value clamped to [0, 100].
+const WEEKLY_CREDIT_BASELINE = 100;
 
 function getRelativeTime(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
@@ -94,6 +103,11 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [activeTab, setActiveTab] = useState<HistoryTab>("generations");
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<PackagingTemplate | null>(null);
+
+  const { count: favoritesCount } = useFavorites();
 
   // ── Fetch from API ────────────────────────────────────────────────────────
   const { data, loading } = useDesigns();
@@ -103,6 +117,36 @@ export default function HistoryPage() {
 
   const totalDesigns = data?.total ?? history.length;
   const totalDownloads = history.reduce((sum, item) => sum + item.downloads, 0);
+
+  // ── Derived widget data (guards real content; empty states otherwise) ───────
+  const hasDesigns = history.length > 0;
+  const lastGenerated = history[0];
+  const recentDownloads = history.slice(0, 2);
+  const creditsUsedThisWeek = history.reduce((sum, d) => sum + d.credits, 0);
+  const creditsBarPct =
+    creditsUsedThisWeek > 0
+      ? Math.min(
+          100,
+          Math.round((creditsUsedThisWeek / WEEKLY_CREDIT_BASELINE) * 100)
+        )
+      : 0;
+  // Most-used packaging type across loaded designs (undefined when none).
+  const favoriteType = useMemo(() => {
+    if (history.length === 0) return undefined;
+    const counts = new Map<string, number>();
+    for (const item of history) {
+      counts.set(item.type, (counts.get(item.type) ?? 0) + 1);
+    }
+    let best: string | undefined;
+    let bestCount = -1;
+    for (const [type, c] of counts) {
+      if (c > bestCount) {
+        best = type;
+        bestCount = c;
+      }
+    }
+    return best;
+  }, [history]);
 
   const handleView = (id: string) => {
     router.push(`/preview/${id}`);
@@ -152,43 +196,56 @@ export default function HistoryPage() {
               </div>
             </div>
           </div>
-
-          {/* Filter Bar */}
-          <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex-1 min-w-[280px] relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A3A3A3]" />
-              <input
-                type="text"
-                placeholder="Search designs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm focus:outline-none focus:border-[#F97316] transition-colors"
-              />
-            </div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm font-medium text-[#1A1A1A] focus:outline-none focus:border-[#F97316] transition-colors cursor-pointer"
-            >
-              {packagingTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm font-medium text-[#1A1A1A] focus:outline-none focus:border-[#F97316] transition-colors cursor-pointer"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
         </motion.div>
+
+        {/* Tabs */}
+        <div className="mb-6">
+          <HistoryTabs
+            active={activeTab}
+            onChange={setActiveTab}
+            favoritesCount={favoritesCount}
+          />
+        </div>
+
+        {activeTab === "favorites" ? (
+          <FavoritesSection onOpenTemplate={setSelectedTemplate} />
+        ) : (
+        <>
+        {/* Filter Bar */}
+        <div className="flex flex-wrap gap-3 items-center mb-8">
+          <div className="flex-1 min-w-[280px] relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A3A3A3]" />
+            <input
+              type="text"
+              placeholder="Search designs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm focus:outline-none focus:border-[#F97316] transition-colors"
+            />
+          </div>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm font-medium text-[#1A1A1A] focus:outline-none focus:border-[#F97316] transition-colors cursor-pointer"
+          >
+            {packagingTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm font-medium text-[#1A1A1A] focus:outline-none focus:border-[#F97316] transition-colors cursor-pointer"
+          >
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Main Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -209,9 +266,9 @@ export default function HistoryPage() {
                 </p>
                 <button
                   onClick={() => router.push("/generate")}
-                  className="px-6 py-3 bg-[#F97316] text-white rounded-xl font-semibold hover:bg-[#F97316]/90 transition-all"
+                  className="px-6 py-3 border-2 border-[#F97316] text-[#F97316] bg-white rounded-xl font-semibold hover:bg-[#F97316]/5 transition-all"
                 >
-                  Start Generating
+                  Generate your first design
                 </button>
               </div>
             ) : (
@@ -359,30 +416,30 @@ export default function HistoryPage() {
                   Recent Downloads
                 </h3>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#F97316] to-[#FACC15] flex items-center justify-center flex-shrink-0">
-                    <Package className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1A1A1A] truncate">
-                      {history[0]?.name}
-                    </p>
-                    <p className="text-xs text-[#A3A3A3]">{getRelativeTime(history[0]?.timestamp)}</p>
-                  </div>
+              {recentDownloads.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <Download className="w-6 h-6 text-[#A3A3A3] mb-2" />
+                  <p className="text-xs text-[#A3A3A3]">No recent downloads</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#F97316] to-[#FACC15] flex items-center justify-center flex-shrink-0">
-                    <Package className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1A1A1A] truncate">
-                      {history[1]?.name}
-                    </p>
-                    <p className="text-xs text-[#A3A3A3]">{getRelativeTime(history[1]?.timestamp)}</p>
-                  </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentDownloads.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#F97316] to-[#FACC15] flex items-center justify-center flex-shrink-0">
+                        <Package className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#1A1A1A] truncate">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-[#A3A3A3]">
+                          {getRelativeTime(item.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Last Generated */}
@@ -393,20 +450,31 @@ export default function HistoryPage() {
                   Last Generated
                 </h3>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-[#1A1A1A]">
-                  {history[0]?.name}
-                </p>
-                <p className="text-xs text-[#737373]">
-                  {history[0]?.type} • {history[0]?.date}
-                </p>
-                <button
-                  onClick={() => handleView(history[0]?.id)}
-                  className="w-full mt-3 px-4 py-2 bg-[#F5F5F0] hover:bg-[#E5E4E0] text-[#1A1A1A] rounded-lg text-sm font-medium transition-all"
-                >
-                  View Design
-                </button>
-              </div>
+              {!lastGenerated ? (
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-[#737373]">
+                    No designs yet
+                  </p>
+                  <p className="text-xs text-[#A3A3A3]">
+                    Generate one to get started
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-[#1A1A1A]">
+                    {lastGenerated.name}
+                  </p>
+                  <p className="text-xs text-[#737373]">
+                    {lastGenerated.type} • {lastGenerated.date}
+                  </p>
+                  <button
+                    onClick={() => handleView(lastGenerated.id)}
+                    className="w-full mt-3 px-4 py-2 bg-[#F5F5F0] hover:bg-[#E5E4E0] text-[#1A1A1A] rounded-lg text-sm font-medium transition-all"
+                  >
+                    View Design
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Favorite Type */}
@@ -417,14 +485,18 @@ export default function HistoryPage() {
                   Favorite Type
                 </h3>
               </div>
-              <div className="text-center py-3">
-                <p className="text-2xl font-bold text-[#F97316] mb-1">
-                  {history[0]?.type ?? "Standing Pouch"}
+              {!favoriteType ? (
+                <p className="text-sm text-[#737373] py-3">
+                  Generate designs to see your most used type
                 </p>
-                <p className="text-xs text-[#737373]">
-                  Most used type
-                </p>
-              </div>
+              ) : (
+                <div className="text-center py-3">
+                  <p className="text-2xl font-bold text-[#F97316] mb-1">
+                    {favoriteType}
+                  </p>
+                  <p className="text-xs text-[#737373]">Most used type</p>
+                </div>
+              )}
             </div>
 
             {/* Credits Used This Week */}
@@ -439,10 +511,10 @@ export default function HistoryPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-xs text-[#737373]">Credits Used</p>
-                    <p className="text-sm font-bold text-[#1A1A1A]">{history.reduce((sum, d) => sum + d.credits, 0)}</p>
+                    <p className="text-sm font-bold text-[#1A1A1A]">{creditsUsedThisWeek}</p>
                   </div>
                   <div className="w-full h-2 bg-[#F5F5F0] rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-[#F97316] to-[#FACC15] rounded-full" style={{ width: '60%' }} />
+                    <div className="h-full bg-gradient-to-r from-[#F97316] to-[#FACC15] rounded-full transition-all duration-300 ease-out" style={{ width: `${creditsBarPct}%` }} />
                   </div>
                 </div>
                 <div>
@@ -455,7 +527,15 @@ export default function HistoryPage() {
             </div>
           </motion.div>
         </div>
+        </>
+        )}
       </div>
+
+      {/* Template detail modal (Favorites tab) */}
+      <TemplateDetailModal
+        template={selectedTemplate}
+        onClose={() => setSelectedTemplate(null)}
+      />
     </div>
   );
 }

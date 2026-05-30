@@ -125,7 +125,7 @@ export default function AboutPage() {
                   href="/generate"
                   className="px-6 py-3 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] text-[#1A1A1A] rounded-xl font-semibold transition-all flex items-center gap-2"
                 >
-                  Start Generating
+                  Generate your first design
                 </a>
               </div>
             </motion.div>
@@ -586,7 +586,7 @@ export default function AboutPage() {
                 href="/generate"
                 className="px-8 py-4 bg-[#F97316] hover:bg-[#F97316]/90 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
               >
-                Start Generating
+                Generate your first design
                 <ArrowRight className="w-5 h-5" />
               </a>
               <a
