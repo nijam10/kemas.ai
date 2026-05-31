@@ -57,7 +57,7 @@ export default function TestimonialsSection() {
         >
           <motion.h2
             variants={fadeInUp}
-            className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-[#1A1A1A] mb-6"
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#1A1A1A] mb-6"
           >
             Built for UMKM packaging workflows
           </motion.h2>
@@ -89,7 +89,7 @@ export default function TestimonialsSection() {
                 />
 
                 {/* Quote mark decoration */}
-                <div className="absolute top-6 left-6 text-6xl font-serif text-[#F97316]/10 leading-none">
+                <div className="absolute top-6 left-6 text-6xl text-[#F97316]/10 leading-none">
                   "
                 </div>
 

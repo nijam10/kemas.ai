@@ -36,11 +36,8 @@ export default function HeroSection() {
               variants={fadeInUp}
               className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-[#1A1A1A] leading-[1.08] tracking-tight mb-8"
             >
-              The first{" "}
-              <span className="inline-flex items-center px-5 py-2 bg-[#1A1A1A] text-white rounded-full text-4xl md:text-5xl lg:text-[3.5rem] shadow-lg">
-                AI packaging studio
-              </span>{" "}
-              for Indonesian snack brands
+              AI packaging studio for{" "}
+              <span className="text-[#F97316]">Indonesian</span> snack brands
             </motion.h1>
 
             {/* Subcopy - Enhanced */}
@@ -60,12 +57,12 @@ export default function HeroSection() {
                   whileHover={{ 
                     scale: 1.02, 
                     y: -3,
-                    boxShadow: "0 12px 40px rgba(0, 0, 0, 0.12)"
+                    boxShadow: "0 12px 40px rgba(249, 115, 22, 0.28)"
                   }}
                   whileTap={{ scale: 0.98 }}
-                  className="group px-10 py-5 bg-[#1A1A1A] text-white rounded-full font-semibold text-base shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center gap-3"
+                  className="group px-10 py-5 bg-[#F97316] text-white rounded-full font-semibold text-base shadow-lg hover:bg-[#F97316]/90 transition-all duration-300 flex items-center gap-3"
                   style={{
-                    boxShadow: "0 8px 24px rgba(26, 26, 26, 0.15)"
+                    boxShadow: "0 8px 24px rgba(249, 115, 22, 0.25)"
                   }}
                 >
                   Create packaging with AI

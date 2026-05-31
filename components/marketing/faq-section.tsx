@@ -72,7 +72,7 @@ export default function FAQSection() {
           >
             <motion.h2
               variants={fadeInUp}
-              className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-[#1A1A1A] mb-6 leading-tight"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#1A1A1A] mb-6 leading-tight"
             >
               Questions before creating your first design?
             </motion.h2>
