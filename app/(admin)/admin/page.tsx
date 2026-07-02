@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { motion } from "framer-motion";
 import AdminShell from "@/components/admin/admin-shell";
 import {
@@ -14,19 +16,30 @@ import {
   Activity,
 } from "lucide-react";
 
-// ── Static stat labels only — values come from real API (TODO) ────────────────
-const statLabels = [
-  { label: "Total UMKM Users", icon: Users, color: "from-[#F97316] to-[#FACC15]" },
-  { label: "Active Generations Today", icon: Zap, color: "from-[#FACC15] to-[#F97316]" },
-  { label: "RunPod Requests", icon: Server, color: "from-[#F97316] to-[#FACC15]" },
-  { label: "Suspended Accounts", icon: Ban, color: "from-red-500 to-red-600" },
-  { label: "Credits Used Today", icon: CreditCard, color: "from-[#FACC15] to-[#F97316]" },
-  { label: "System Status", icon: CheckCircle2, color: "from-green-500 to-green-600" },
-];
+// ── Stat icons ────────────────────────────────
+
 
 export default function AdminDashboardPage() {
-  // TODO: Replace with real API call — GET /api/admin/stats
-  const stats = statLabels.map((s) => ({ ...s, value: "—", change: "" }));
+  const [statsData, setStatsData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setStatsData(data.data);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const stats = [
+    { label: "Total UMKM Users", icon: Users, color: "from-[#F97316] to-[#FACC15]", value: loading ? "—" : statsData?.totalUsers ?? 0 },
+    { label: "Active Generations Today", icon: Zap, color: "from-[#FACC15] to-[#F97316]", value: loading ? "—" : statsData?.activeUsers ?? 0 },
+    { label: "RunPod Requests", icon: Server, color: "from-[#F97316] to-[#FACC15]", value: loading ? "—" : statsData?.queueCount ?? 0 },
+    { label: "Suspended Accounts", icon: Ban, color: "from-red-500 to-red-600", value: loading ? "—" : 0 },
+    { label: "Credits Distributed", icon: CreditCard, color: "from-[#FACC15] to-[#F97316]", value: loading ? "—" : statsData?.creditsDistributed ?? 0 },
+    { label: "System Status", icon: CheckCircle2, color: "from-green-500 to-green-600", value: loading ? "—" : statsData?.serverStatus ?? "Unknown" },
+  ];
 
   return (
     <AdminShell title="Admin Overview" subtitle="Monitor platform activity, usage, and system health.">

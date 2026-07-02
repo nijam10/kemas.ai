@@ -284,6 +284,7 @@ model Design {
   
   // Asset URLs
   imageUrl        String?        // Final generated image URL
+  wrapperUrl      String?        // Flat 2D layout wrapper image URL
   logoUrl         String?        // User's uploaded logo URL
   thumbnailUrl    String?        // Thumbnail for gallery/history
   

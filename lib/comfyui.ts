@@ -71,6 +71,7 @@ export interface ComfyUIOutputImage {
   filename: string;
   subfolder: string;
   type: string;
+  nodeId?: string;
 }
 
 export type ComfyUIJobStatus =
@@ -287,17 +288,17 @@ export async function getHistory(promptId: string): Promise<ComfyUIJobStatus> {
 
   if (!completed) return { status: "RUNNING" };
 
-  // Collect all SaveImage outputs (node "62" → kemas_output prefix)
+  // Collect all image outputs and tag them with their node ID
   const images: ComfyUIOutputImage[] = [];
   if (entry.outputs) {
-    for (const nodeOutput of Object.values(entry.outputs)) {
+    for (const [nodeId, nodeOutput] of Object.entries(entry.outputs)) {
       if (nodeOutput.images) {
-        images.push(...nodeOutput.images);
+        images.push(...nodeOutput.images.map(img => ({ ...img, nodeId })));
       }
     }
   }
 
-  // Prefer images with "kemas_output" prefix (our SaveImage node)
+  // Prefer images with "kemas_output" prefix (our SaveImage node) if any exist
   const kemasImages = images.filter((img) =>
     img.filename.startsWith("kemas_output")
   );

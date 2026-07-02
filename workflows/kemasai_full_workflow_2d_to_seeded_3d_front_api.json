@@ -1,0 +1,347 @@
+{
+  "25": {
+    "inputs": {
+      "unet_name": "flux1-dev-fp8.safetensors",
+      "weight_dtype": "fp8_e4m3fn"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "26": {
+    "inputs": {
+      "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "28": {
+    "inputs": {
+      "seed": 566199954053098,
+      "steps": 35,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "25",
+        0
+      ],
+      "positive": [
+        "29",
+        0
+      ],
+      "negative": [
+        "30",
+        0
+      ],
+      "latent_image": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "29": {
+    "inputs": {
+      "text": "A single-frame flat 2D digital graphic design layout for a continuous snack packaging wrapper, landscape orientation. The background is a clean, solid off-white cream color. The top and bottom edges are framed with flat, stylized dark brown liquid chocolate splashes. CENTER FRONT PANEL: large bubbly bold brown title \"CHOCO CRINKLE\" centered prominently, with a flat 2D illustration of cracked chocolate cookies resting on small chocolate chips below. LEFT AND RIGHT OUTER AREAS: reserved for back and side information layout, keeping enough clean cream space for ingredient text, nutrition facts, brand message, manufacturer information, and barcode. Strictly flat orthographic packaging design, seamless continuous wrapper layout, clean packaging graphic, pure 2D digital art.",
+      "clip": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "30": {
+    "inputs": {
+      "text": "3D, mockup, physical pouch, perspective, depth, realistic lighting, shadows, glossy plastic bag, wrinkles, watermark, distorted layout, random objects, gibberish text",
+      "clip": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "32": {
+    "inputs": {
+      "width": 1536,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "33": {
+    "inputs": {
+      "samples": [
+        "28",
+        0
+      ],
+      "vae": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "34": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "54": {
+    "inputs": {
+      "opacity": 0.2,
+      "logo_scale": 1,
+      "search_height_ratio": 0.6,
+      "feather": 1.4,
+      "shadow_strength": 0.18,
+      "base_image": [
+        "115",
+        0
+      ],
+      "logo_image": [
+        "57",
+        0
+      ],
+      "logo_mask": [
+        "59",
+        1
+      ]
+    },
+    "class_type": "KemasSmartLogoPlacement",
+    "_meta": {
+      "title": "Kemas Smart Logo Placement"
+    }
+  },
+  "57": {
+    "inputs": {
+      "image": "_Pngtree_salon_logo_vector_6872052__2_-removebg-preview.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image (Logo)"
+    }
+  },
+  "59": {
+    "inputs": {
+      "image": "example.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image (Mask)"
+    }
+  },
+  "100": {
+    "inputs": {
+      "image": "barcode.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image (Barcode)"
+    }
+  },
+  "105": {
+    "inputs": {
+      "images": [
+        "107",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "107": {
+    "inputs": {
+      "left_text_1": "Ingredient\n\nAll-purpose flour, cocoa powder,\ngranulated sugar, brown sugar,\nbaking powder, salt, eggs, butter,\nvanilla.",
+      "left_text_2": "Nutrition Fact\n\nCalories ........................ 20gr\nTotal Fat ....................... 20gr\nCholesterol ................... 20gr\nSodium .......................... 20gr\nProtein .......................... 20gr",
+      "right_text_1": "Brand Message\n\nChoco Crinkle Cookies offer\nthe perfect balance of rich\nchocolate flavor and a\ndelightful texture.",
+      "right_text_2": "Manufacture by\n\nPoliteknik Negeri Batam\n+62-812-3456-7890\nhello@polibatam.ac.id\nwww.polibatam.ac.id",
+      "text_color_hex": "#332211",
+      "base_image": [
+        "54",
+        0
+      ],
+      "barcode_image": [
+        "100",
+        0
+      ]
+    },
+    "class_type": "KemasFullLayoutBuilder",
+    "_meta": {
+      "title": "\ud83d\udce6 Kemas Smart Wrap Layout Builder"
+    }
+  },
+  "115": {
+    "inputs": {
+      "upscale_model": [
+        "116",
+        0
+      ],
+      "image": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Upscale Image (using Model)"
+    }
+  },
+  "116": {
+    "inputs": {
+      "model_name": "4x-UltraSharp.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model"
+    }
+  },
+  "201": {
+    "inputs": {
+      "text": "A realistic 3D stand-up snack pouch mockup, front-facing, centered composition, studio product photography. The pouch features the same visual identity as the flat front design: a clean off-white cream background, dark brown liquid chocolate splash graphics at the top and bottom, large bubbly bold brown text reading \"CHOCO CRINKLE\" in the center, and a detailed illustration of cracked chocolate cookies resting on small chocolate chips below the title. The bag is a realistic laminated plastic snack pouch with subtle natural wrinkles, sealed top and bottom edges, soft studio lighting, soft shadow on a clean white background, premium professional packaging mockup. Front design only, no back panel information.",
+      "clip": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "3D Front Mockup Positive Prompt"
+    }
+  },
+  "202": {
+    "inputs": {
+      "text": "ingredient text, nutrition facts, barcode, manufacture by, brand message paragraph, back panel, side panel, gibberish text, unreadable typography, random extra objects, multiple bags, deformed pouch, blurry, watermark, low quality",
+      "clip": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "3D Front Mockup Negative Prompt"
+    }
+  },
+  "203": {
+    "inputs": {
+      "width": 1024,
+      "height": 1280,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image 3D Front"
+    }
+  },
+  "204": {
+    "inputs": {
+      "seed": 534248298204702,
+      "steps": 35,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "25",
+        0
+      ],
+      "positive": [
+        "201",
+        0
+      ],
+      "negative": [
+        "202",
+        0
+      ],
+      "latent_image": [
+        "203",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler Seeded 3D Front"
+    }
+  },
+  "205": {
+    "inputs": {
+      "samples": [
+        "204",
+        0
+      ],
+      "vae": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode 3D Front Mockup"
+    }
+  },
+  "206": {
+    "inputs": {
+      "images": [
+        "205",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview 3D Front Mockup"
+    }
+  },
+  "120": {
+    "inputs": {
+      "filename_prefix": "KemasAI/master_wrapper",
+      "images": [
+        "107",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Master Wrapper"
+    }
+  },
+  "207": {
+    "inputs": {
+      "filename_prefix": "KemasAI/front_mockup_seeded",
+      "images": [
+        "205",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save 3D Front Mockup"
+    }
+  }
+}

@@ -8,7 +8,8 @@ import PackagingTypeFilter, {
   packagingTypeLabel,
 } from "@/components/gallery/packaging-type-filter";
 import GalleryPagination from "@/components/gallery/gallery-pagination";
-import { GALLERY_TEMPLATES, type PackagingTemplate } from "@/lib/gallery-templates";
+import { type PackagingTemplate } from "@/lib/gallery-templates";
+import { type GalleryTemplate } from "@prisma/client";
 import { useFavorites } from "@/lib/use-favorites";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -41,11 +42,39 @@ export default function GalleryPage() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
     useState<PackagingTemplate | null>(null);
+  const [galleryTemplates, setGalleryTemplates] = useState<any[]>([]);
+
+  // Fetch real gallery data
+  useEffect(() => {
+    fetch("/api/gallery")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          // Map GalleryTemplate to PackagingTemplate format for the UI components
+          const mapped = data.data.templates.map((t: GalleryTemplate) => ({
+            id: t.id,
+            name: t.title,
+            category: t.category,
+            packagingType: t.packagingType,
+            thumbnailUrl: t.previewImageUrl,
+            fullImageUrl: t.previewImageUrl,
+            promptPreset: t.promptPreset,
+            styleTags: t.styleTags,
+            colorMood: t.colorMood,
+            badge: t.isFeatured ? "featured" : undefined,
+            usageCount: t.usageCount,
+            createdAt: t.createdAt,
+            author: { name: "Community" } // Could extract from description or add author relation later
+          }));
+          setGalleryTemplates(mapped);
+        }
+      });
+  }, []);
 
   // ── Filter → sort → paginate ──────────────────────────────────────────────
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return GALLERY_TEMPLATES.filter((t) => {
+    return galleryTemplates.filter((t) => {
       const matchesType =
         selectedPackagingType === "all" ||
         t.packagingType === selectedPackagingType;

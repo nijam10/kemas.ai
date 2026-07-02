@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import AdminShell from "@/components/admin/admin-shell";
 import { Users, Search, Eye, Ban, CheckCircle2 } from "lucide-react";
@@ -26,10 +26,31 @@ interface AdminUser {
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | UserStatus>("all");
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // TODO: Replace with real API call — GET /api/admin/users
-  const users: AdminUser[] = [];
-  const loading = false;
+  useEffect(() => {
+    fetch("/api/admin/users")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          // Map backend formatted users to UI AdminUser
+          const mappedUsers = data.data.users.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            businessName: u.businessName || null,
+            role: u.role,
+            status: u.status,
+            creditBalance: u.credits,
+            totalDesigns: u.designsCount,
+            createdAt: u.createdAt
+          }));
+          setUsers(mappedUsers);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =

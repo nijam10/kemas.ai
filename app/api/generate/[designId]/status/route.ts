@@ -66,6 +66,7 @@ export async function GET(
         status: design.status,
         currentStep: job?.currentStep ?? null,
         imageUrl: design.imageUrl,
+        wrapperUrl: design.wrapperUrl,
         thumbnailUrl: design.thumbnailUrl,
         errorMessage: job?.errorMessage ?? null,
       },
@@ -82,6 +83,7 @@ export async function GET(
         status: "PROCESSING",
         currentStep: job?.currentStep ?? "API_GATEWAY",
         imageUrl: null,
+        wrapperUrl: null,
         thumbnailUrl: null,
         errorMessage: null,
       },
@@ -102,6 +104,7 @@ export async function GET(
           status: design.status,
           currentStep: job.currentStep,
           imageUrl: design.imageUrl,
+          wrapperUrl: design.wrapperUrl,
           thumbnailUrl: null,
           errorMessage: "Generation server temporarily unreachable",
         },
@@ -125,6 +128,7 @@ export async function GET(
         status: "PROCESSING",
         currentStep: step,
         imageUrl: null,
+        wrapperUrl: null,
         thumbnailUrl: null,
         errorMessage: null,
       },
@@ -156,6 +160,7 @@ export async function GET(
         status: "FAILED",
         currentStep: "COMFYUI_PIPELINE",
         imageUrl: null,
+        wrapperUrl: null,
         thumbnailUrl: null,
         errorMessage: comfyStatus.error,
       },
@@ -164,11 +169,13 @@ export async function GET(
 
   // ── 6c. Completed ─────────────────────────────────────────────────────────
   if (comfyStatus.status === "COMPLETED") {
-    // Pick the first output image (type=output preferred over temp)
-    const outputImages = comfyStatus.images.filter((img) => img.type === "output");
-    const firstImage = outputImages[0] ?? comfyStatus.images[0];
+    // We expect Node 105 to produce the 2D wrapper, and Node 206 to produce the 3D mockup.
+    // If nodeId is not available or doesn't match, fallback to index-based.
+    const wrapperImage = comfyStatus.images.find(img => img.nodeId === "105") ?? comfyStatus.images[0];
+    const mockupImage = comfyStatus.images.find(img => img.nodeId === "206") ?? comfyStatus.images[1] ?? comfyStatus.images[0];
 
-    const imageUrl = firstImage ? getImageUrl(firstImage) : null;
+    const wrapperUrl = wrapperImage ? getImageUrl(wrapperImage) : null;
+    const imageUrl = mockupImage ? getImageUrl(mockupImage) : null;
 
     // ── Idempotent credit deduction ───────────────────────────────────────
     // Check if a GENERATION_USAGE transaction already exists for this design
@@ -202,6 +209,7 @@ export async function GET(
         data: {
           status: "COMPLETED",
           imageUrl,
+          wrapperUrl,
           thumbnailUrl: imageUrl, // use same URL for thumbnail for now
         },
       }),
@@ -222,6 +230,7 @@ export async function GET(
         status: "COMPLETED",
         currentStep: "OUTPUT_READY",
         imageUrl,
+        wrapperUrl,
         thumbnailUrl: imageUrl,
         errorMessage: null,
       },
@@ -236,6 +245,7 @@ export async function GET(
       status: design.status,
       currentStep: job.currentStep,
       imageUrl: design.imageUrl,
+      wrapperUrl: design.wrapperUrl,
       thumbnailUrl: design.thumbnailUrl,
       errorMessage: null,
     },

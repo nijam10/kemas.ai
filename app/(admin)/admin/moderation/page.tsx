@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import AdminShell from "@/components/admin/admin-shell";
 import {
@@ -34,8 +34,44 @@ export default function AdminModerationPage() {
   const [prompts, setPrompts] = useState<ModerationItem[]>([]);
   const [generations, setGenerations] = useState<ModerationItem[]>([]);
   const [activeTab, setActiveTab] = useState<"prompts" | "images">("prompts");
+  const [loading, setLoading] = useState(true);
 
-  // TODO: Replace with real API call — GET /api/admin/moderation
+  useEffect(() => {
+    fetch("/api/admin/moderation")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          const logs = data.data.logs;
+          const mappedPrompts = logs
+            .filter((l: any) => l.type === "PROMPT")
+            .map((l: any) => ({
+              id: l.id,
+              userName: l.userName,
+              userBusiness: "",
+              type: l.type,
+              status: l.status,
+              content: l.reason || "No content available",
+              timestamp: new Date(l.createdAt).toLocaleDateString()
+            }));
+          const mappedImages = logs
+            .filter((l: any) => l.type === "IMAGE")
+            .map((l: any) => ({
+              id: l.id,
+              userName: l.userName,
+              userBusiness: "",
+              type: l.type,
+              status: l.status,
+              content: l.reason || "No reason",
+              imageUrl: l.designImageUrl,
+              timestamp: new Date(l.createdAt).toLocaleDateString()
+            }));
+          setPrompts(mappedPrompts);
+          setGenerations(mappedImages);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const pendingPrompts = prompts.filter((p) => p.status === "PENDING").length;
   const pendingImages = generations.filter((g) => g.status === "PENDING").length;
   const flaggedItems = [...prompts, ...generations].filter((item) => item.status === "FLAGGED").length;

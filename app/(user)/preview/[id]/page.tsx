@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  Share,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -28,6 +30,7 @@ interface DesignStatus {
   status: "PROCESSING" | "COMPLETED" | "FAILED";
   currentStep: string | null;
   imageUrl: string | null;
+  wrapperUrl: string | null;
   thumbnailUrl: string | null;
   errorMessage: string | null;
 }
@@ -82,12 +85,18 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
   const [loadingMeta, setLoadingMeta] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [viewMode, setViewMode] = useState<"3D" | "2D">("3D");
+
   // 3D viewer state
   const [rotationY, setRotationY] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
   const dragStartRotation = useRef(0);
+
+  const { toast } = useToast();
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUpscaling, setIsUpscaling] = useState(false);
 
   // ── Fetch design metadata ─────────────────────────────────────────────────
   useEffect(() => {
@@ -177,12 +186,60 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
     setZoom(1);
   };
 
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    try {
+      const res = await fetch(`/api/designs/${designId}/publish`, { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        toast({ message: "Successfully published to Gallery!" });
+      } else {
+        toast({ message: data.error || "Failed to publish" });
+      }
+    } catch (e) {
+      toast({ message: "An error occurred" });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleUpscale = async (url: string) => {
+    setIsUpscaling(true);
+    try {
+      const res = await fetch("/api/upscale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId: designId, filename: "wrapper.png" }) // mockup
+      });
+      const data = await res.json();
+      
+      if (data.success && data.data?.url) {
+        toast({ message: "Upscale complete! Downloading..." });
+        const link = document.createElement("a");
+        link.href = data.data.url;
+        link.download = `upscaled-2d-${designId}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        toast({ message: "Failed to upscale. Direct downloading instead..." });
+        window.open(url, "_blank");
+      }
+    } catch (e) {
+      toast({ message: "Upscale error. Direct downloading instead..." });
+      window.open(url, "_blank");
+    } finally {
+      setIsUpscaling(false);
+    }
+  };
+
   const isProcessing =
     !statusData ||
     statusData.status === "PROCESSING";
   const isFailed = statusData?.status === "FAILED";
   const isCompleted = statusData?.status === "COMPLETED";
   const imageUrl = statusData?.imageUrl ?? null;
+  const wrapperUrl = statusData?.wrapperUrl ?? null;
   const currentStep = statusData?.currentStep ?? "API_GATEWAY";
   const stepLabel = STEP_LABELS[currentStep] ?? currentStep;
 
@@ -248,6 +305,32 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
             transition={{ duration: 0.6 }}
             className="lg:col-span-8"
           >
+            {isCompleted && wrapperUrl && (
+              <div className="flex justify-center mb-4">
+                <div className="bg-white border border-[#E5E4E0] p-1 rounded-xl inline-flex shadow-sm">
+                  <button
+                    onClick={() => setViewMode("3D")}
+                    className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      viewMode === "3D"
+                        ? "bg-[#F97316] text-white shadow"
+                        : "text-[#737373] hover:text-[#1A1A1A] hover:bg-[#F5F5F0]"
+                    }`}
+                  >
+                    3D Mockup
+                  </button>
+                  <button
+                    onClick={() => setViewMode("2D")}
+                    className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      viewMode === "2D"
+                        ? "bg-[#F97316] text-white shadow"
+                        : "text-[#737373] hover:text-[#1A1A1A] hover:bg-[#F5F5F0]"
+                    }`}
+                  >
+                    2D Layout
+                  </button>
+                </div>
+              </div>
+            )}
             <div
               className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#FCFBF7] to-[#F5F5F0] border border-[#E5E4E0]"
               onMouseDown={handleMouseDown}
@@ -310,7 +393,7 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
               {/* Completed — show real image or 3D mockup */}
               {isCompleted && (
                 <>
-                  {!isDragging && (
+                  {!isDragging && viewMode === "3D" && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -334,55 +417,77 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                   )}
 
                   <div className="absolute inset-0 flex items-center justify-center p-8">
-                    <motion.div
-                      animate={{
-                        y: isDragging ? 0 : [0, -10, 0],
-                        scale: zoom,
-                      }}
-                      transition={{
-                        y: {
-                          duration: 4,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        },
-                        scale: { duration: 0.3 },
-                      }}
-                      style={{
-                        transform: `rotateY(${rotationY}deg)`,
-                        transformStyle: "preserve-3d",
-                        transition: isDragging
-                          ? "none"
-                          : "transform 0.3s ease-out",
-                      }}
-                      className="relative"
-                    >
-                      {imageUrl ? (
-                        /* Real generated image */
-                        <div className="relative w-72 h-96 rounded-2xl overflow-hidden shadow-2xl">
-                          <Image
-                            src={imageUrl}
-                            alt={designMeta?.title ?? "Generated packaging"}
-                            fill
-                            className="object-cover"
-                            unoptimized // ComfyUI images are external
-                          />
-                        </div>
-                      ) : (
-                        /* Fallback 3D mockup if imageUrl missing */
-                        <div className="relative w-72 h-96">
-                          <div className="absolute inset-0 bg-gradient-to-br from-[#F97316] via-[#F97316] to-[#FACC15] rounded-[2.5rem] shadow-2xl">
-                            <div className="absolute inset-x-8 top-12 bottom-16 bg-white/95 rounded-3xl shadow-lg p-6 flex flex-col items-center justify-center">
-                              <Package className="w-20 h-20 text-[#F97316] mb-3" />
-                              <p className="text-lg font-bold text-[#1A1A1A] text-center">
-                                {designMeta?.title ?? "Your Design"}
-                              </p>
-                            </div>
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-48 h-8 bg-gradient-to-b from-[#F97316] to-[#F97316]/80 rounded-t-2xl shadow-md" />
-                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/30 rounded-[2.5rem]" />
+                    {viewMode === "3D" ? (
+                      <motion.div
+                        animate={{
+                          y: isDragging ? 0 : [0, -10, 0],
+                          scale: zoom,
+                        }}
+                        transition={{
+                          y: {
+                            duration: 4,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          },
+                          scale: { duration: 0.3 },
+                        }}
+                        style={{
+                          transform: `rotateY(${rotationY}deg)`,
+                          transformStyle: "preserve-3d",
+                          transition: isDragging
+                            ? "none"
+                            : "transform 0.3s ease-out",
+                        }}
+                        className="relative"
+                      >
+                        {imageUrl ? (
+                          /* Real generated image */
+                          <div className="relative w-72 h-96 rounded-2xl overflow-hidden shadow-2xl">
+                            <Image
+                              src={imageUrl}
+                              alt={designMeta?.title ?? "Generated packaging"}
+                              fill
+                              className="object-cover"
+                              unoptimized // ComfyUI images are external
+                            />
                           </div>
-                        </div>
-                      )}
-                    </motion.div>
+                        ) : (
+                          /* Fallback 3D mockup if imageUrl missing */
+                          <div className="relative w-72 h-96">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#F97316] via-[#F97316] to-[#FACC15] rounded-[2.5rem] shadow-2xl">
+                              <div className="absolute inset-x-8 top-12 bottom-16 bg-white/95 rounded-3xl shadow-lg p-6 flex flex-col items-center justify-center">
+                                <Package className="w-20 h-20 text-[#F97316] mb-3" />
+                                <p className="text-lg font-bold text-[#1A1A1A] text-center">
+                                  {designMeta?.title ?? "Your Design"}
+                                </p>
+                              </div>
+                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-48 h-8 bg-gradient-to-b from-[#F97316] to-[#F97316]/80 rounded-t-2xl shadow-md" />
+                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/30 rounded-[2.5rem]" />
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        animate={{ scale: zoom }}
+                        transition={{ scale: { duration: 0.3 } }}
+                        className="relative w-full h-full flex items-center justify-center"
+                      >
+                        {wrapperUrl ? (
+                          <div className="relative w-[90%] h-[90%] shadow-lg">
+                            <Image
+                              src={wrapperUrl}
+                              alt="2D Layout Wrapper"
+                              fill
+                              className="object-contain"
+                              unoptimized
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-[#737373] font-medium">2D Layout is not available</div>
+                        )}
+                      </motion.div>
+                    )}
                   </div>
 
                   <div className="absolute bottom-6 right-6 px-4 py-2 bg-white/90 backdrop-blur-sm border border-[#E5E4E0] rounded-xl text-xs font-medium text-[#737373]">
@@ -395,21 +500,25 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
             {/* Controls — only when completed */}
             {isCompleted && (
               <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-                <button
-                  onClick={handleRotateLeft}
-                  className="p-3 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/40 rounded-xl transition-all"
-                  title="Rotate Left"
-                >
-                  <RotateCcw className="w-5 h-5 text-[#1A1A1A]" />
-                </button>
-                <button
-                  onClick={handleRotateRight}
-                  className="p-3 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/40 rounded-xl transition-all"
-                  title="Rotate Right"
-                >
-                  <RotateCw className="w-5 h-5 text-[#1A1A1A]" />
-                </button>
-                <div className="w-px h-8 bg-[#E5E4E0]" />
+                {viewMode === "3D" && (
+                  <>
+                    <button
+                      onClick={handleRotateLeft}
+                      className="p-3 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/40 rounded-xl transition-all"
+                      title="Rotate Left"
+                    >
+                      <RotateCcw className="w-5 h-5 text-[#1A1A1A]" />
+                    </button>
+                    <button
+                      onClick={handleRotateRight}
+                      className="p-3 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/40 rounded-xl transition-all"
+                      title="Rotate Right"
+                    >
+                      <RotateCw className="w-5 h-5 text-[#1A1A1A]" />
+                    </button>
+                    <div className="w-px h-8 bg-[#E5E4E0]" />
+                  </>
+                )}
                 <button
                   onClick={handleZoomOut}
                   className="p-3 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/40 rounded-xl transition-all"
@@ -556,16 +665,36 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
               </h3>
               <div className="space-y-3">
                 {isCompleted && imageUrl && (
+                  <button
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow-md disabled:opacity-50"
+                  >
+                    {isPublishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share className="w-5 h-5" />}
+                    Publish to Gallery
+                  </button>
+                )}
+                {isCompleted && imageUrl && (
                   <a
                     href={imageUrl}
-                    download
+                    download={`3d-mockup-${designId}.png`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#F97316]/90 text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow-md"
                   >
                     <Download className="w-5 h-5" />
-                    Download Design
+                    Download 3D Mockup
                   </a>
+                )}
+                {isCompleted && wrapperUrl && (
+                  <button
+                    onClick={() => handleUpscale(wrapperUrl)}
+                    disabled={isUpscaling}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white border border-[#F97316] text-[#F97316] hover:bg-[#F97316]/10 rounded-xl font-semibold transition-all shadow-sm hover:shadow-md disabled:opacity-50"
+                  >
+                    {isUpscaling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                    {isUpscaling ? "Upscaling (Please wait)..." : "Download 2D (HD Upscale)"}
+                  </button>
                 )}
                 <button
                   onClick={() => router.push("/generate")}

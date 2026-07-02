@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import AdminShell from "@/components/admin/admin-shell";
 import { CreditCard, Search, Users } from "lucide-react";
@@ -22,9 +22,19 @@ interface AdminCreditUser {
 
 export default function AdminCreditsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [users, setUsers] = useState<AdminCreditUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // TODO: Replace with real API call — GET /api/admin/credits
-  const users: AdminCreditUser[] = [];
+  useEffect(() => {
+    fetch("/api/admin/credits")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUsers(data.data.users);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredUsers = users.filter(
     (u) =>

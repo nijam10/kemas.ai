@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { creditService } from "@/server/services/credit.service";
 import { userService } from "@/server/services/user.service";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/credits/balance
@@ -31,12 +32,29 @@ export async function GET(_request: NextRequest) {
       resolvedUserId = mockUser.id;
     }
 
-    const summary = await creditService.getCreditSummary(resolvedUserId);
+    let summary = await creditService.getCreditSummary(resolvedUserId);
+    
+    // Auto-create wallet for legacy users if it doesn't exist
     if (!summary) {
-      return NextResponse.json(
-        { success: false, error: "Credit wallet not found for this user." },
-        { status: 404 }
-      );
+      await prisma.creditWallet.create({
+        data: { userId: resolvedUserId, balance: 40, dailyQuota: 40 }
+      });
+      await prisma.creditTransaction.create({
+        data: {
+          userId: resolvedUserId,
+          amount: 40,
+          type: "DAILY_RESET",
+          description: "Welcome credits (Auto-initialized)",
+        }
+      });
+      summary = await creditService.getCreditSummary(resolvedUserId);
+      
+      if (!summary) {
+        return NextResponse.json(
+          { success: false, error: "Credit wallet could not be created." },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
