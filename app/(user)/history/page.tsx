@@ -156,8 +156,32 @@ export default function HistoryPage() {
     router.push(`/preview/${id}`);
   };
 
-  const handleDownload = (name: string) => {
-    alert(`Downloading ${name}...`);
+  const handleDownload = (item: any) => {
+    const design = data?.designs.find(d => d.id === item.id);
+    if (design?.imageUrl) {
+      const url = `/api/download?url=${encodeURIComponent(design.imageUrl)}&filename=3d-mockup-${design.id}.png`;
+      const link = document.createElement("a");
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert("Image not available");
+    }
+  };
+
+  const handlePublish = async (item: any) => {
+    try {
+      const res = await fetch(`/api/designs/${item.id}/publish`, { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        alert("Successfully published to Gallery!");
+      } else {
+        alert(json.error || "Failed to publish");
+      }
+    } catch (e) {
+      alert("An error occurred");
+    }
   };
 
   const handleReusePrompt = (prompt: string) => {
@@ -342,7 +366,7 @@ export default function HistoryPage() {
                         <Box className="w-5 h-5 text-[#1A1A1A]" />
                       </button>
                       <button
-                        onClick={() => handleDownload(item.name)}
+                        onClick={() => handleDownload(item)}
                         className="p-3 bg-white hover:bg-[#F5F5F0] rounded-xl transition-colors"
                         title="Download"
                       >
@@ -377,20 +401,27 @@ export default function HistoryPage() {
                         <RotateCw className="w-4 h-4" />
                         Reuse Prompt
                       </button>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <button
                           onClick={() => handlePreview3D(item.id)}
-                          className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 text-[#1A1A1A] rounded-xl text-sm font-medium transition-all"
+                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 text-[#1A1A1A] rounded-xl text-xs font-medium transition-all"
                         >
                           <Box className="w-4 h-4" />
                           3D
                         </button>
                         <button
-                          onClick={() => handleDownload(item.name)}
-                          className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 text-[#1A1A1A] rounded-xl text-sm font-medium transition-all"
+                          onClick={() => handleDownload(item)}
+                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 text-[#1A1A1A] rounded-xl text-xs font-medium transition-all"
                         >
                           <Download className="w-4 h-4" />
                           Save
+                        </button>
+                        <button
+                          onClick={() => handlePublish(item)}
+                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 text-[#1A1A1A] rounded-xl text-xs font-medium transition-all"
+                        >
+                          <Sparkles className="w-4 h-4 text-[#F97316]" />
+                          Publish
                         </button>
                       </div>
                     </div>

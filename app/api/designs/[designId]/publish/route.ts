@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const { designId } = params;
+    const { designId } = await params;
 
     // Fetch the design
     const design = await prisma.design.findUnique({
@@ -47,7 +47,7 @@ export async function POST(
         title: design.title,
         slug,
         description: `Published by user. Prompt: ${design.prompt}`,
-        category: "SNACKS", // Default for now
+        category: "ARTISAN_SNACK", // Default for now
         packagingType: design.packagingType,
         previewImageUrl: design.imageUrl,
         promptPreset: design.prompt,

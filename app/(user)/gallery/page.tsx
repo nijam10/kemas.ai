@@ -62,7 +62,7 @@ export default function GalleryPage() {
             styleTags: t.styleTags,
             colorMood: t.colorMood,
             badge: t.isFeatured ? "featured" : undefined,
-            usageCount: t.usageCount,
+            usageCount: 0, // Fallback, not in schema
             createdAt: t.createdAt,
             author: { name: "Community" } // Could extract from description or add author relation later
           }));
@@ -84,7 +84,7 @@ export default function GalleryPage() {
         packagingTypeLabel(t.packagingType).toLowerCase().includes(q);
       return matchesType && matchesSearch;
     });
-  }, [searchQuery, selectedPackagingType]);
+  }, [searchQuery, selectedPackagingType, galleryTemplates]);
 
   const sorted = useMemo(() => {
     const list = [...filtered];

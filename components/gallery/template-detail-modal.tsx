@@ -44,7 +44,8 @@ export default function TemplateDetailModal({
 
   if (!template) return null;
 
-  const Silhouette = PACKAGING_ICONS[template.packagingType];
+  const normalizedType = template.packagingType.toLowerCase().replace(/_/g, "-");
+  const Silhouette = PACKAGING_ICONS[normalizedType] || PACKAGING_ICONS[template.packagingType];
 
   return (
     <div
@@ -74,15 +75,27 @@ export default function TemplateDetailModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Left column — gradient + silhouette preview (~60%) */}
+        {/* Left column — image or fallback (~60%) */}
         <div
-          className="relative md:w-3/5 aspect-[4/5] md:aspect-auto md:min-h-[420px] flex items-center justify-center"
-          style={{
-            backgroundImage: `linear-gradient(to bottom right, ${template.gradientFrom}, ${template.gradientTo})`,
-          }}
+          className="relative md:w-3/5 aspect-[4/5] md:aspect-auto md:min-h-[420px] flex items-center justify-center overflow-hidden bg-[#F5F5F0]"
         >
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              backgroundImage: `linear-gradient(to bottom right, ${template.gradientFrom || '#F97316'}, ${template.gradientTo || '#FACC15'})`,
+            }}
+          />
           {Silhouette && (
-            <Silhouette className="h-[45%] w-auto text-white" strokeWidth={2} />
+            <Silhouette className="relative z-10 h-[45%] w-auto text-white/40" strokeWidth={2} />
+          )}
+
+          {(template.thumbnailUrl || template.fullImageUrl) && (
+            <img 
+              src={template.thumbnailUrl || template.fullImageUrl} 
+              alt={template.name}
+              className="absolute inset-0 w-full h-full object-cover z-20"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
           )}
         </div>
 
@@ -122,22 +135,29 @@ export default function TemplateDetailModal({
             </div>
           </div>
 
-          {/* Colors */}
-          <div className="mt-5">
-            <h3 className="text-xs font-semibold tracking-wide text-[#A3A3A3] mb-2">
-              COLORS
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {template.colorPalette.map((color, i) => (
-                <span
-                  key={`${color}-${i}`}
-                  title={color}
-                  className="w-7 h-7 rounded-full border border-[#E5E4E0]"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
+          {/* Colors / Mood */}
+          {(template.colorPalette?.length > 0 || template.colorMood) && (
+            <div className="mt-5">
+              <h3 className="text-xs font-semibold tracking-wide text-[#A3A3A3] mb-2">
+                COLORS / MOOD
+              </h3>
+              <div className="flex flex-wrap gap-2 items-center">
+                {template.colorPalette?.map((color, i) => (
+                  <span
+                    key={`${color}-${i}`}
+                    title={color}
+                    className="w-7 h-7 rounded-full border border-[#E5E4E0]"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+                {template.colorMood && (
+                  <span className="text-sm font-medium text-[#1A1A1A] px-2">
+                    {template.colorMood}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* CTA */}
           <Link

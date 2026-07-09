@@ -19,7 +19,8 @@ export default function TemplateCard({
   onOpen,
 }: TemplateCardProps) {
   // Distinct silhouette per packaging type (shared icons).
-  const Silhouette = PACKAGING_ICONS[template.packagingType];
+  const normalizedType = template.packagingType.toLowerCase().replace(/_/g, "-");
+  const Silhouette = PACKAGING_ICONS[normalizedType] || PACKAGING_ICONS[template.packagingType];
 
   return (
     <div
@@ -34,15 +35,27 @@ export default function TemplateCard({
       }}
       className="group relative bg-white border border-[#E5E4E0] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/40"
     >
-      {/* Preview — mood gradient + per-type silhouette */}
+      {/* Preview — image or fallback mood gradient + per-type silhouette */}
       <div
-        className="relative aspect-[4/5] flex items-center justify-center"
-        style={{
-          backgroundImage: `linear-gradient(to bottom right, ${template.gradientFrom}, ${template.gradientTo})`,
-        }}
+        className="relative aspect-[4/5] flex items-center justify-center overflow-hidden"
       >
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{
+            backgroundImage: `linear-gradient(to bottom right, ${template.gradientFrom || '#F97316'}, ${template.gradientTo || '#FACC15'})`,
+          }}
+        />
         {Silhouette && (
-          <Silhouette className="h-[58%] w-auto text-white" strokeWidth={2} />
+          <Silhouette className="relative z-10 h-[58%] w-auto text-white/40" strokeWidth={2} />
+        )}
+
+        {template.thumbnailUrl && (
+          <img 
+            src={template.thumbnailUrl} 
+            alt={template.name}
+            className="absolute inset-0 w-full h-full object-cover z-20"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
         )}
 
         {/* Badge (top-left) */}
@@ -77,21 +90,22 @@ export default function TemplateCard({
           />
         </button>
 
-        {/* Hover overlay — slides up from the bottom */}
-        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
-          <h3 className="text-white font-medium text-[13px] truncate">
-            {template.name}
-          </h3>
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {template.styleTags.map((tag) => (
-              <span
-                key={tag}
-                className="bg-white/15 backdrop-blur-sm text-white border border-white/20 px-2 py-0.5 rounded-full text-[10px]"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+      </div>
+
+      {/* Persistent Info Section Below Image */}
+      <div className="p-4 border-t border-[#E5E4E0] bg-white">
+        <h3 className="text-[#1A1A1A] font-bold text-[15px] truncate mb-2">
+          {template.name}
+        </h3>
+        <div className="flex flex-wrap gap-1.5">
+          {template.styleTags.map((tag) => (
+            <span
+              key={tag}
+              className="bg-[#F5F5F0] text-[#737373] px-2 py-0.5 rounded text-[11px] font-medium"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
       </div>
     </div>

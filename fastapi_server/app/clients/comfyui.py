@@ -6,7 +6,9 @@ class ComfyUIClient:
     def __init__(self):
         self.base_url = settings.COMFYUI_BASE_URL.rstrip("/")
         self.client_id = settings.COMFYUI_CLIENT_ID
-        self.headers = {}
+        self.headers = {
+            "ngrok-skip-browser-warning": "69420"
+        }
         if settings.COMFYUI_API_KEY:
             self.headers["Authorization"] = f"Bearer {settings.COMFYUI_API_KEY}"
 

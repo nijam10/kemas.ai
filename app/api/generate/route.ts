@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { creditService } from "@/server/services/credit.service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,12 +29,13 @@ export async function POST(request: NextRequest) {
     };
     const mappedPackagingType = packagingTypeEnumMap[packagingType] || "STANDING_POUCH";
 
-    // 3. Credit Check & Deduction (Atomic Transaction)
-    let wallet = await prisma.creditWallet.findUnique({ where: { userId } });
+    // 3. Credit Check & Deduction (with automatic daily reset)
+    // dailyResetIfNeeded will auto-create wallet if missing and reset if new day
+    let wallet = await creditService.dailyResetIfNeeded(userId);
     
     // Auto-create wallet for existing users who logged in before the wallet system was added
     if (!wallet) {
-      wallet = await prisma.creditWallet.create({
+      await prisma.creditWallet.create({
         data: { userId, balance: 40, dailyQuota: 40 }
       });
       await prisma.creditTransaction.create({
@@ -44,9 +46,10 @@ export async function POST(request: NextRequest) {
           description: "Welcome credits (Auto-initialized)",
         }
       });
+      wallet = await creditService.dailyResetIfNeeded(userId);
     }
 
-    if (wallet.balance < 10) {
+    if (!wallet || wallet.balance < 10) {
       return NextResponse.json({ success: false, error: "Insufficient credits. You need 10 credits to generate." }, { status: 402 });
     }
 
@@ -102,19 +105,74 @@ export async function POST(request: NextRequest) {
        return NextResponse.json({ success: false, error: "Database transaction failed" }, { status: 500 });
     }
 
-    // 4. Forward to FastAPI
+    // 4. Forward to FastAPI (ComfyUI gateway)
+    const fastapiUrl = process.env.FASTAPI_URL || "http://localhost:8000";
     if (formData.has("job_id")) formData.delete("job_id");
     formData.append("job_id", design.id);
 
-    const response = await fetch("http://localhost:8000/generate", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch(`${fastapiUrl}/generate`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "ngrok-skip-browser-warning": "69420",
+        },
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      
-      // Refund credits and mark failed if FastAPI rejects the request
+      if (!response.ok) {
+        const errorText = await response.text();
+        
+        // Refund credits and mark failed if FastAPI rejects the request
+        await prisma.$transaction([
+          prisma.creditWallet.update({
+            where: { userId },
+            data: { balance: { increment: 10 } }
+          }),
+          prisma.creditTransaction.create({
+            data: {
+              userId,
+              amount: 10,
+              type: "REFUND",
+              description: `Refund for failed generation: ${design.title}`,
+              referenceId: design.id
+            }
+          }),
+          prisma.design.update({
+            where: { id: design.id },
+            data: { status: "FAILED" }
+          }),
+          prisma.generationJob.update({
+            where: { id: job.id },
+            data: { status: "FAILED", errorMessage: `FastAPI error: ${errorText}` }
+          })
+        ]);
+
+        return NextResponse.json(
+          { success: false, error: `FastAPI error: ${errorText}` },
+          { status: response.status }
+        );
+      }
+
+      const data = await response.json();
+
+      // Update job with prompt_id (runpodJobId)
+      await prisma.generationJob.update({
+        where: { id: job.id },
+        data: { runpodJobId: data.prompt_id }
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          jobId: design.id,
+          promptId: data.prompt_id,
+        },
+      });
+    } catch (fetchErr) {
+      // ComfyUI server unreachable (ECONNREFUSED, timeout, etc.)
+      // Refund the credits that were already deducted
+      console.error("ComfyUI connection failed, refunding credits:", fetchErr);
+
       await prisma.$transaction([
         prisma.creditWallet.update({
           where: { userId },
@@ -125,7 +183,7 @@ export async function POST(request: NextRequest) {
             userId,
             amount: 10,
             type: "REFUND",
-            description: `Refund for failed generation: ${design.title}`,
+            description: `Refund: generation server unreachable — ${design.title}`,
             referenceId: design.id
           }
         }),
@@ -135,31 +193,18 @@ export async function POST(request: NextRequest) {
         }),
         prisma.generationJob.update({
           where: { id: job.id },
-          data: { status: "FAILED", errorMessage: `FastAPI error: ${errorText}` }
+          data: {
+            status: "FAILED",
+            errorMessage: "Generation server is not running. Please start ComfyUI first."
+          }
         })
       ]);
 
       return NextResponse.json(
-        { success: false, error: `FastAPI error: ${errorText}` },
-        { status: response.status }
+        { success: false, error: "Generation server is not running. Please start ComfyUI/FastAPI server first." },
+        { status: 503 }
       );
     }
-
-    const data = await response.json();
-
-    // Update job with prompt_id (runpodJobId)
-    await prisma.generationJob.update({
-      where: { id: job.id },
-      data: { runpodJobId: data.prompt_id }
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        jobId: design.id,
-        promptId: data.prompt_id,
-      },
-    });
 
   } catch (err) {
     console.error("API Error:", err);

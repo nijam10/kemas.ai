@@ -26,7 +26,7 @@ export class GalleryService {
       },
       orderBy: [
         { isFeatured: "desc" },
-        { createdAt: "asc" },
+        { createdAt: "desc" },
       ],
     });
   }

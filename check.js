@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function main() { const data = await prisma.galleryTemplate.findMany(); console.log(data.map(d => ({id: d.id, title: d.title}))); } main();

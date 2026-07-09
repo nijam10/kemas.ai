@@ -19,6 +19,8 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs/promises";
+import path from "path";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -174,8 +176,37 @@ export async function GET(
     const wrapperImage = comfyStatus.images.find(img => img.nodeId === "105") ?? comfyStatus.images[0];
     const mockupImage = comfyStatus.images.find(img => img.nodeId === "206") ?? comfyStatus.images[1] ?? comfyStatus.images[0];
 
-    const wrapperUrl = wrapperImage ? getImageUrl(wrapperImage) : null;
-    const imageUrl = mockupImage ? getImageUrl(mockupImage) : null;
+    const wrapperUrlComfy = wrapperImage ? getImageUrl(wrapperImage) : null;
+    const imageUrlComfy = mockupImage ? getImageUrl(mockupImage) : null;
+
+    let localWrapperUrl = null;
+    let localImageUrl = null;
+
+    async function downloadToLocal(comfyUrl: string, suffix: string) {
+      try {
+        const response = await fetch(comfyUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const filename = `${design.id}_${suffix}.png`;
+        const filepath = path.join(process.cwd(), 'public', 'designs', filename);
+        await fs.mkdir(path.dirname(filepath), { recursive: true });
+        await fs.writeFile(filepath, buffer);
+        return `/designs/${filename}`;
+      } catch (e) {
+        console.error("Failed to download image from ComfyUI", e);
+        return comfyUrl; // Fallback to ComfyUI URL if download fails
+      }
+    }
+
+    if (wrapperUrlComfy) {
+      localWrapperUrl = await downloadToLocal(wrapperUrlComfy, 'wrapper');
+    }
+    if (imageUrlComfy) {
+      localImageUrl = await downloadToLocal(imageUrlComfy, 'mockup');
+    }
+
+    const wrapperUrl = localWrapperUrl || wrapperUrlComfy;
+    const imageUrl = localImageUrl || imageUrlComfy;
 
     // ── Idempotent credit deduction ───────────────────────────────────────
     // Check if a GENERATION_USAGE transaction already exists for this design

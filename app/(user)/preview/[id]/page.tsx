@@ -203,6 +203,16 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const triggerDownload = (url: string, filename: string) => {
+    const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${filename}`;
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = filename; // fallback
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleUpscale = async (url: string) => {
     setIsUpscaling(true);
     try {
@@ -215,19 +225,14 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
       
       if (data.success && data.data?.url) {
         toast({ message: "Upscale complete! Downloading..." });
-        const link = document.createElement("a");
-        link.href = data.data.url;
-        link.download = `upscaled-2d-${designId}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        triggerDownload(data.data.url, `upscaled-2d-${designId}.png`);
       } else {
         toast({ message: "Failed to upscale. Direct downloading instead..." });
-        window.open(url, "_blank");
+        triggerDownload(url, `2d-design-${designId}.png`);
       }
     } catch (e) {
       toast({ message: "Upscale error. Direct downloading instead..." });
-      window.open(url, "_blank");
+      triggerDownload(url, `2d-design-${designId}.png`);
     } finally {
       setIsUpscaling(false);
     }
@@ -675,16 +680,13 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                   </button>
                 )}
                 {isCompleted && imageUrl && (
-                  <a
-                    href={imageUrl}
-                    download={`3d-mockup-${designId}.png`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => triggerDownload(imageUrl, `3d-mockup-${designId}.png`)}
                     className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#F97316]/90 text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow-md"
                   >
                     <Download className="w-5 h-5" />
                     Download 3D Mockup
-                  </a>
+                  </button>
                 )}
                 {isCompleted && wrapperUrl && (
                   <button
