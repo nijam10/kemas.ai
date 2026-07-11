@@ -61,14 +61,40 @@ export async function GET(
 
     // 4. Update DB based on FastAPI status
     if (fastApiStatus === "COMPLETED") {
+       let wrapperUrl = data.data.master_wrapper_url;
+       let imageUrl = data.data.front_mockup_url;
+
+       // Download images locally so they survive server restarts
+       const fs = require('fs');
+       const path = require('path');
+       
+       async function downloadToLocal(remoteUrl: string, suffix: string) {
+         try {
+           const res = await fetch(remoteUrl);
+           if (!res.ok) return remoteUrl;
+           const buffer = Buffer.from(await res.arrayBuffer());
+           const filename = `${design.id}_${suffix}.png`;
+           const filepath = path.join(process.cwd(), 'public', 'designs', filename);
+           await fs.promises.mkdir(path.dirname(filepath), { recursive: true });
+           await fs.promises.writeFile(filepath, buffer);
+           return `/designs/${filename}`;
+         } catch (e) {
+           console.error("Failed to download image:", e);
+           return remoteUrl;
+         }
+       }
+
+       if (wrapperUrl) wrapperUrl = await downloadToLocal(wrapperUrl, 'wrapper');
+       if (imageUrl) imageUrl = await downloadToLocal(imageUrl, 'mockup');
+
        await prisma.$transaction([
          prisma.design.update({
            where: { id: design.id },
            data: {
              status: "COMPLETED",
-             wrapperUrl: data.data.master_wrapper_url,
-             imageUrl: data.data.front_mockup_url,
-             thumbnailUrl: data.data.front_mockup_url
+             wrapperUrl: wrapperUrl,
+             imageUrl: imageUrl,
+             thumbnailUrl: imageUrl
            }
          }),
          ...(job ? [prisma.generationJob.update({

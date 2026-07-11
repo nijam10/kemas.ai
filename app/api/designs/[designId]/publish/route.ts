@@ -37,25 +37,35 @@ export async function POST(
       where: { slug },
     });
 
-    if (existing) {
+    if (design.isPublished || existing) {
+      // Keep DB in sync just in case
+      if (!design.isPublished && existing) {
+        await prisma.design.update({ where: { id: designId }, data: { isPublished: true } });
+      }
       return NextResponse.json({ success: false, error: "Design is already published" }, { status: 400 });
     }
 
-    // Create GalleryTemplate
-    const published = await prisma.galleryTemplate.create({
-      data: {
-        title: design.title,
-        slug,
-        description: `Published by user. Prompt: ${design.prompt}`,
-        category: "ARTISAN_SNACK", // Default for now
-        packagingType: design.packagingType,
-        previewImageUrl: design.imageUrl,
-        promptPreset: design.prompt,
-        colorMood: "Custom",
-        styleTags: ["User Published"],
-        isFeatured: false,
-      },
-    });
+    // Create GalleryTemplate and update Design in a transaction
+    const [published] = await prisma.$transaction([
+      prisma.galleryTemplate.create({
+        data: {
+          title: design.title,
+          slug,
+          description: `Published by user. Prompt: ${design.prompt}`,
+          category: "ARTISAN_SNACK", // Default for now
+          packagingType: design.packagingType,
+          previewImageUrl: design.imageUrl,
+          promptPreset: design.prompt,
+          colorMood: "Custom",
+          styleTags: ["User Published"],
+          isFeatured: false,
+        },
+      }),
+      prisma.design.update({
+        where: { id: designId },
+        data: { isPublished: true }
+      })
+    ]);
 
     return NextResponse.json({ success: true, data: published });
   } catch (error) {

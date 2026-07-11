@@ -20,6 +20,8 @@ import {
   Sparkles,
   TrendingUp,
   Clock,
+  Trash2,
+  Bookmark,
 } from "lucide-react";
 import { useDesigns } from "@/hooks/use-designs";
 import type { ApiDesign } from "@/lib/api-client";
@@ -60,6 +62,8 @@ function toDisplayItem(d: ApiDesign) {
     fullPrompt: d.prompt,
     credits: d.creditsUsed,
     downloads: 1, // placeholder until download tracking is implemented
+    isSaved: d.isSaved,
+    isPublished: d.isPublished,
   };
 }
 
@@ -176,8 +180,39 @@ export default function HistoryPage() {
       const json = await res.json();
       if (json.success) {
         alert("Successfully published to Gallery!");
+        window.location.reload();
       } else {
         alert(json.error || "Failed to publish");
+      }
+    } catch (e) {
+      alert("An error occurred");
+    }
+  };
+
+  const handleSave = async (item: any) => {
+    try {
+      const res = await fetch(`/api/designs/${item.id}/save`, { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        alert(json.data.isSaved ? "Saved to Favorites!" : "Removed from Favorites");
+        window.location.reload();
+      } else {
+        alert(json.error || "Failed to save");
+      }
+    } catch (e) {
+      alert("An error occurred");
+    }
+  };
+
+  const handleDelete = async (item: any) => {
+    if (!confirm("Are you sure you want to delete this design?")) return;
+    try {
+      const res = await fetch(`/api/designs/${item.id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        window.location.reload();
+      } else {
+        alert(json.error || "Failed to delete");
       }
     } catch (e) {
       alert("An error occurred");
@@ -372,6 +407,13 @@ export default function HistoryPage() {
                       >
                         <Download className="w-5 h-5 text-[#1A1A1A]" />
                       </button>
+                      <button
+                        onClick={() => handleDelete(item)}
+                        className="p-3 bg-white hover:bg-red-50 rounded-xl transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-5 h-5 text-red-500" />
+                      </button>
                     </div>
                   </div>
 
@@ -410,18 +452,19 @@ export default function HistoryPage() {
                           3D
                         </button>
                         <button
-                          onClick={() => handleDownload(item)}
-                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 text-[#1A1A1A] rounded-xl text-xs font-medium transition-all"
+                          onClick={() => handleSave(item)}
+                          className={`flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 ${item.isSaved ? "text-[#F97316]" : "text-[#1A1A1A]"} rounded-xl text-xs font-medium transition-all`}
                         >
-                          <Download className="w-4 h-4" />
-                          Save
+                          <Bookmark className={`w-4 h-4 ${item.isSaved ? "fill-[#F97316]" : ""}`} />
+                          {item.isSaved ? "Saved" : "Save"}
                         </button>
                         <button
                           onClick={() => handlePublish(item)}
-                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-[#E5E4E0] hover:bg-[#F5F5F0] hover:border-[#F97316]/20 text-[#1A1A1A] rounded-xl text-xs font-medium transition-all"
+                          disabled={item.isPublished}
+                          className={`flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-[#E5E4E0] ${item.isPublished ? "opacity-50 cursor-not-allowed" : "hover:bg-[#F5F5F0] hover:border-[#F97316]/20"} text-[#1A1A1A] rounded-xl text-xs font-medium transition-all`}
                         >
-                          <Sparkles className="w-4 h-4 text-[#F97316]" />
-                          Publish
+                          <Sparkles className={`w-4 h-4 ${item.isPublished ? "text-[#A3A3A3]" : "text-[#F97316]"}`} />
+                          {item.isPublished ? "Published" : "Publish"}
                         </button>
                       </div>
                     </div>

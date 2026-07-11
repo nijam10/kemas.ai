@@ -3,14 +3,14 @@
 import { motion } from "framer-motion";
 
 export default function TrustedBySection() {
-  // Mock company logos (using text placeholders for realistic monochrome logos)
+  // Real UMKM partners from database seed
   const companies = [
-    { name: "Morton Salt", width: "w-24" },
-    { name: "FICOR", width: "w-20" },
-    { name: "RUWAG", width: "w-22" },
-    { name: "keychain", width: "w-24" },
-    { name: "Hypochlorous", width: "w-28" },
-    { name: "Pavo", width: "w-20" },
+    { name: "Keripik Rumah Rasa", width: "w-36" },
+    { name: "Dapoer Singkong", width: "w-36" },
+    { name: "Kopi Aren Nusantara", width: "w-44" },
+    { name: "Sambal Bu Rina", width: "w-32" },
+    { name: "Teh Organik Lestari", width: "w-40" },
+    { name: "Snack Lokal Batam", width: "w-36" },
   ];
 
   return (
@@ -36,7 +36,7 @@ export default function TrustedBySection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`${company.width} h-8 flex items-center justify-center`}
+                className={`w-auto h-8 flex items-center justify-center`}
               >
                 {/* Monochrome logo placeholder */}
                 <div className="text-[#737373]/60 font-bold text-base tracking-tight hover:text-[#737373] transition-colors duration-300">

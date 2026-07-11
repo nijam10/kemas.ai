@@ -46,6 +46,7 @@ export default function AuthNavbar() {
   const navigation = !isAuthenticated
     ? [
         { name: "Home", href: "/" },
+        { name: "Gallery", href: "/gallery" },
         { name: "About", href: "/about" },
       ]
     : [

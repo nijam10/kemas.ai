@@ -292,6 +292,7 @@ model Design {
   status          DesignStatus   @default(PROCESSING)
   creditsUsed     Int            @default(10) // Credits consumed for this generation
   isSaved         Boolean        @default(false) // User saved to favorites
+  isPublished     Boolean        @default(false) // Whether design has been published to gallery
   
   // Timestamps
   createdAt       DateTime       @default(now())

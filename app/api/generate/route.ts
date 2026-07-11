@@ -14,6 +14,15 @@ export async function POST(request: NextRequest) {
     }
     const userId = session.user.id;
 
+    // Verify user still exists in database (handles DB wipes or deleted users)
+    const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!dbUser) {
+      return NextResponse.json(
+        { success: false, error: "User account no longer exists. Please log out and log in again." }, 
+        { status: 401 }
+      );
+    }
+
     // 2. Form Data
     const formData = await request.formData();
     const prompt = formData.get("prompt") as string;
@@ -205,7 +214,6 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       );
     }
-
   } catch (err) {
     console.error("API Error:", err);
     return NextResponse.json(

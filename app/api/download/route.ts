@@ -10,7 +10,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(url);
+    let fetchUrl = url;
+    // If the url is a local relative path, prepend the origin so fetch works in Node
+    if (url.startsWith("/")) {
+      fetchUrl = `${request.nextUrl.origin}${url}`;
+    }
+
+    const response = await fetch(fetchUrl);
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
     }

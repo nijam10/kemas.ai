@@ -1,45 +1,72 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
-import { galleryService } from "@/server/services/gallery.service";
-import type { GalleryCategory, PackagingType } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import type { PackagingType } from "@prisma/client";
 
 /**
  * GET /api/gallery
  *
- * Returns gallery templates from the database.
+ * Returns generated designs from users that are marked as completed.
  *
  * Query params (all optional):
- *   category       — filter by GalleryCategory enum value
  *   packagingType  — filter by PackagingType enum value
- *   featured       — "true" to return featured templates only
- *
- * Response:
- *   { success: true, data: { templates: GalleryTemplate[], total: number } }
+ *   featured       — "true" to return featured/latest designs only
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-
-    const category = searchParams.get("category") as GalleryCategory | null;
+    
     const packagingType = searchParams.get("packagingType") as PackagingType | null;
     const featuredOnly = searchParams.get("featured") === "true";
 
-    const templates = await galleryService.getTemplates({
-      ...(category && { category }),
-      ...(packagingType && { packagingType }),
-      ...(featuredOnly && { featuredOnly }),
+    const designs = await prisma.design.findMany({
+      where: {
+        status: "COMPLETED",
+        imageUrl: { not: null },
+        ...(packagingType && packagingType !== "all" && { packagingType }),
+        ...(featuredOnly && { isSaved: true }),
+      },
+      include: {
+        user: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: featuredOnly ? 8 : 50,
     });
+
+    const mappedTemplates = designs.map(d => ({
+      id: d.id,
+      title: d.title,
+      category: "MODERN_MINIMAL",
+      packagingType: d.packagingType,
+      previewImageUrl: d.thumbnailUrl || d.imageUrl,
+      gradientFrom: null,
+      gradientTo: null,
+      promptPreset: d.prompt,
+      colorMood: "warm",
+      styleTags: ["design"],
+      description: d.prompt,
+      colorPalette: [],
+      isFeatured: d.isSaved,
+      createdAt: d.createdAt,
+      user: {
+        name: d.user?.name || "Community",
+      }
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        templates,
-        total: templates.length,
+        templates: mappedTemplates,
+        total: mappedTemplates.length,
       },
     });
   } catch (error) {
     console.error("[GET /api/gallery]", error);
     return NextResponse.json(
-      { success: false, error: "Failed to fetch gallery templates" },
+      { success: false, error: "Failed to fetch gallery designs" },
       { status: 500 }
     );
   }

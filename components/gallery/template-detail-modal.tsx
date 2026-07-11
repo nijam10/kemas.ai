@@ -161,7 +161,7 @@ export default function TemplateDetailModal({
 
           {/* CTA */}
           <Link
-            href="/generate"
+            href={`/generate?promptPreset=${encodeURIComponent(template.promptPreset || "")}&packagingType=${template.packagingType.toLowerCase().replace(/_/g, "-")}`}
             className="mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#F97316]/90 text-white rounded-xl font-semibold transition-all duration-300 ease-out shadow-sm hover:shadow-md"
           >
             Use This Template

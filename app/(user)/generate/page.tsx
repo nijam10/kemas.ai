@@ -36,10 +36,10 @@ export default function GeneratePage() {
   const [packagingType, setPackagingType] = useState("standing-pouch");
   const [productName, setProductName] = useState("");
   const [brandCategory, setBrandCategory] = useState("");
-  const [ingredients, setIngredients] = useState("");
-  const [manufacturerInfo, setManufacturerInfo] = useState("");
-  const [nutritionFact, setNutritionFact] = useState("Calories ... 20gr\nTotal Fat ... 20gr\nProtein ... 5gr");
-  const [brandMessage, setBrandMessage] = useState("A delicious taste for you.");
+  const [ingredients, setIngredients] = useState("All-purpose flour, cocoa powder,\ngranulated sugar, brown sugar,\nbaking powder, salt, eggs, butter,\nvanilla.");
+  const [manufacturerInfo, setManufacturerInfo] = useState("Politeknik Negeri Batam\n+62-812-3456-7890\nhello@polibatam.ac.id\nwww.polibatam.ac.id");
+  const [nutritionFact, setNutritionFact] = useState("Calories ........................ 20gr\nTotal Fat ....................... 20gr\nCholesterol ................... 20gr\nSodium .......................... 20gr\nProtein .......................... 20gr");
+  const [brandMessage, setBrandMessage] = useState("Choco Crinkle Cookies offer\nthe perfect balance of rich\nchocolate flavor and a\ndelightful texture.");
   const [textColorHex, setTextColorHex] = useState("#332211");
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -47,6 +47,18 @@ export default function GeneratePage() {
   const [maskFile, setMaskFile] = useState<File | null>(null);
 
   const [isDownloadingAssets, setIsDownloadingAssets] = useState(false);
+
+  // Read URL query parameters for prefilling template data
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const presetPrompt = params.get("promptPreset");
+      const presetPackaging = params.get("packagingType");
+      
+      if (presetPrompt) setPrompt(presetPrompt);
+      if (presetPackaging) setPackagingType(presetPackaging);
+    }
+  }, []);
 
   // Polling Effect
   useEffect(() => {

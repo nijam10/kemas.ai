@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import AuthBackground from "@/components/auth/auth-background";
-import { Shield } from "lucide-react";
 
 // Google icon SVG (official brand asset)
 function GoogleIcon({ className }: { className?: string }) {
@@ -30,9 +29,6 @@ function GoogleIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-
-// Show dev buttons only in development
-const IS_DEV = process.env.NODE_ENV === "development";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -115,9 +111,6 @@ export default function LoginPage() {
               <div className="absolute inset-0 bg-gradient-to-r from-[#F97316]/0 via-[#F97316]/5 to-[#F97316]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </button>
 
-            {/* Dev-only buttons — hidden in production */}
-            {IS_DEV && <DevButtons />}
-
             {/* Footer note */}
             <div className="pt-2 text-center">
               <p className="text-xs text-[#A3A3A3]">
@@ -152,54 +145,6 @@ export default function LoginPage() {
           </Link>
         </div>
       </motion.div>
-    </div>
-  );
-}
-
-// ── Dev-only bypass buttons ───────────────────────────────────────────────────
-
-function DevButtons() {
-  const handleDevUser = () =>
-    signIn("credentials", {
-      email: "khairul@keripik.com",
-      redirect: true,
-      callbackUrl: "/dashboard",
-    });
-
-  const handleDevAdmin = () =>
-    signIn("credentials", {
-      email: "admin@kemas.ai",
-      redirect: true,
-      callbackUrl: "/admin",
-    });
-
-  return (
-    <div className="space-y-3 pt-2">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-[#E5E4E0]" />
-        <span className="text-xs text-[#A3A3A3] font-medium px-2">
-          Dev only
-        </span>
-        <div className="flex-1 h-px bg-[#E5E4E0]" />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="px-4 py-2.5 bg-[#F97316]/10 border border-[#F97316]/20 hover:bg-[#F97316]/20 text-[#F97316] rounded-xl text-sm font-semibold transition-all"
-        >
-          → User
-        </button>
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/admin" })}
-          className="px-4 py-2.5 bg-[#1A1A1A]/5 border border-[#1A1A1A]/10 hover:bg-[#1A1A1A]/10 text-[#1A1A1A] rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5"
-        >
-          <Shield className="w-3.5 h-3.5" />
-          Admin
-        </button>
-      </div>
-      <p className="text-[10px] text-center text-[#A3A3A3]">
-        Dev buttons use Google OAuth — role is set from database
-      </p>
     </div>
   );
 }

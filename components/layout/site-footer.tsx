@@ -4,27 +4,27 @@ import { Mail, MapPin, Phone } from "lucide-react";
 const footerNavigation = {
   product: [
     { name: "Generate Design", href: "/generate" },
-    { name: "3D Preview", href: "/preview" },
-    { name: "Gallery", href: "/history" },
-    { name: "Pricing", href: "#pricing" },
+    { name: "3D Preview", href: "/preview/demo" },
+    { name: "Gallery", href: "/gallery" },
+    { name: "History", href: "/history" },
   ],
   company: [
-    { name: "About Us", href: "#about" },
-    { name: "Technology", href: "#technology" },
-    { name: "Blog", href: "#blog" },
-    { name: "Careers", href: "#careers" },
+    { name: "About Us", href: "/about" },
+    { name: "Technology", href: "/technology" },
+    { name: "Blog", href: "/blog" },
+    { name: "Careers", href: "/careers" },
   ],
   support: [
-    { name: "Help Center", href: "#help" },
-    { name: "Documentation", href: "#docs" },
-    { name: "API Reference", href: "#api" },
-    { name: "Contact Us", href: "#contact" },
+    { name: "Help Center", href: "/help" },
+    { name: "Documentation", href: "/docs" },
+    { name: "API Reference", href: "/api-docs" },
+    { name: "Contact Us", href: "/contact" },
   ],
   legal: [
-    { name: "Privacy Policy", href: "#privacy" },
-    { name: "Terms of Service", href: "#terms" },
-    { name: "Cookie Policy", href: "#cookies" },
-    { name: "Refund Policy", href: "#refund" },
+    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Terms of Service", href: "/terms" },
+    { name: "Cookie Policy", href: "/cookies" },
+    { name: "Refund Policy", href: "/refund" },
   ],
 };
 

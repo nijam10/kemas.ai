@@ -69,6 +69,7 @@ export interface ApiDesign {
   status: string;
   creditsUsed: number;
   isSaved: boolean;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }

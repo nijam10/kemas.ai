@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://neondb_owner:npg_qV1x5ZPLNfjM@ep-flat-boat-aosg27me.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
     
     # ComfyUI configuration
-    COMFYUI_BASE_URL: str = "https://guru-wool-lived.ngrok-free.dev"
+    COMFYUI_BASE_URL: str = "https://habitant-earmuff-hunter.ngrok-free.dev"
     COMFYUI_CLIENT_ID: str = "kemas-fastapi-server"
     COMFYUI_API_KEY: str = ""
     

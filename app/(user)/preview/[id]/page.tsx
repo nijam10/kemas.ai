@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -69,15 +69,17 @@ const STEP_LABELS: Record<string, string> = {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function PreviewPage({ params }: { params: { id: string } }) {
+export default function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const designId = params.id;
+  const resolvedParams = use(params);
+  const designId = resolvedParams.id;
 
   // Design data from /api/designs (for title, packagingType, createdAt)
   const [designMeta, setDesignMeta] = useState<{
     title: string;
     packagingType: string;
     createdAt: string;
+    isPublished: boolean;
   } | null>(null);
 
   // Live status from polling
@@ -108,7 +110,7 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
         const json = await res.json();
         if (json.success) {
           const found = json.data.designs.find(
-            (d: { id: string; title: string; packagingType: string; createdAt: string }) =>
+            (d: { id: string; title: string; packagingType: string; createdAt: string; isPublished: boolean }) =>
               d.id === designId
           );
           if (found) {
@@ -116,6 +118,7 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
               title: found.title,
               packagingType: found.packagingType,
               createdAt: found.createdAt,
+              isPublished: found.isPublished,
             });
           }
         }
@@ -165,18 +168,22 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
   }, [pollStatus]);
 
   // ── 3D viewer handlers ────────────────────────────────────────────────────
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     setIsDragging(true);
     dragStartX.current = e.clientX;
     dragStartRotation.current = rotationY;
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   };
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
     setRotationY(
       dragStartRotation.current + (e.clientX - dragStartX.current) * 0.5
     );
   };
-  const handleMouseUp = () => setIsDragging(false);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false);
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+  };
   const handleRotateLeft = () => setRotationY((p) => p - 45);
   const handleRotateRight = () => setRotationY((p) => p + 45);
   const handleZoomIn = () => setZoom((p) => Math.min(p + 0.2, 2));
@@ -193,6 +200,7 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
       const data = await res.json();
       if (data.success) {
         toast({ message: "Successfully published to Gallery!" });
+        setDesignMeta(prev => prev ? { ...prev, isPublished: true } : prev);
       } else {
         toast({ message: data.error || "Failed to publish" });
       }
@@ -337,11 +345,11 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
               </div>
             )}
             <div
-              className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#FCFBF7] to-[#F5F5F0] border border-[#E5E4E0]"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
+              className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#FCFBF7] to-[#F5F5F0] border border-[#E5E4E0] touch-none"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               style={{
                 cursor: isDragging ? "grabbing" : "grab",
                 perspective: "1200px",
@@ -427,6 +435,7 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                         animate={{
                           y: isDragging ? 0 : [0, -10, 0],
                           scale: zoom,
+                          rotateY: rotationY,
                         }}
                         transition={{
                           y: {
@@ -435,13 +444,13 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                             ease: "easeInOut",
                           },
                           scale: { duration: 0.3 },
+                          rotateY: {
+                            duration: isDragging ? 0 : 0.3,
+                            ease: "easeOut",
+                          },
                         }}
                         style={{
-                          transform: `rotateY(${rotationY}deg)`,
                           transformStyle: "preserve-3d",
-                          transition: isDragging
-                            ? "none"
-                            : "transform 0.3s ease-out",
                         }}
                         className="relative"
                       >
@@ -672,11 +681,11 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                 {isCompleted && imageUrl && (
                   <button
                     onClick={handlePublish}
-                    disabled={isPublishing}
+                    disabled={isPublishing || designMeta?.isPublished}
                     className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow-md disabled:opacity-50"
                   >
                     {isPublishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share className="w-5 h-5" />}
-                    Publish to Gallery
+                    {designMeta?.isPublished ? "Published" : "Publish to Gallery"}
                   </button>
                 )}
                 {isCompleted && imageUrl && (
