@@ -1,21 +1,3 @@
-/**
- * GET /api/generate/[designId]/status
- *
- * Polls the generation status for a specific design.
- * Called by the preview page every few seconds while PROCESSING/RUNNING.
- *
- * Flow:
- *   1. Verify Auth.js session
- *   2. Load Design + GenerationJob — verify ownership
- *   3. If already COMPLETED or FAILED, return local DB state
- *   4. If still running, query ComfyUI /history/{promptId}
- *   5. On COMPLETED: save imageUrl, deduct credits (idempotent), update DB
- *   6. On FAILED: update DB, do NOT deduct credits
- *   7. Return current status + imageUrl
- *
- * Must run in Node runtime (uses Prisma).
- */
-
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -23,43 +5,30 @@ import fs from "fs/promises";
 import path from "path";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  getHistory,
-  getImageUrl,
-  ComfyUIUnavailableError,
-} from "@/lib/comfyui";
+import { getHistory, getImageUrl, ComfyUIUnavailableError } from "@/lib/comfyui";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ designId: string }> }
 ) {
-  // ── 1. Auth ───────────────────────────────────────────────────────────────
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { success: false, error: "Not authenticated." },
-      { status: 401 }
-    );
+    return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 });
   }
   const userId = session.user.id;
   const { designId } = await params;
 
-  // ── 2. Load Design + Job ──────────────────────────────────────────────────
   const design = await prisma.design.findFirst({
-    where: { id: designId, userId }, // ownership check
+    where: { id: designId, userId },
     include: { generationJob: true },
   });
 
   if (!design) {
-    return NextResponse.json(
-      { success: false, error: "Design not found." },
-      { status: 404 }
-    );
+    return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
   }
 
   const job = design.generationJob;
 
-  // ── 3. Already terminal — return DB state ─────────────────────────────────
   if (design.status === "COMPLETED" || design.status === "FAILED") {
     return NextResponse.json({
       success: true,
@@ -75,8 +44,7 @@ export async function GET(
     });
   }
 
-  // ── 4. No job record or no prompt_id — can't poll ─────────────────────────
-  const promptId = job?.runpodJobId; // we store ComfyUI prompt_id here
+  const promptId = job?.runpodJobId;
   if (!job || !promptId) {
     return NextResponse.json({
       success: true,
@@ -92,12 +60,10 @@ export async function GET(
     });
   }
 
-  // ── 5. Poll ComfyUI ───────────────────────────────────────────────────────
   let comfyStatus;
   try {
     comfyStatus = await getHistory(promptId);
   } catch (err) {
-    // ComfyUI unreachable — return current DB state without failing
     if (err instanceof ComfyUIUnavailableError) {
       return NextResponse.json({
         success: true,
@@ -108,17 +74,15 @@ export async function GET(
           imageUrl: design.imageUrl,
           wrapperUrl: design.wrapperUrl,
           thumbnailUrl: null,
-          errorMessage: "Generation server temporarily unreachable",
+          errorMessage: "Service temporarily unreachable",
         },
       });
     }
     throw err;
   }
 
-  // ── 6a. Still running ─────────────────────────────────────────────────────
   if (comfyStatus.status === "QUEUED" || comfyStatus.status === "RUNNING") {
-    const step =
-      comfyStatus.status === "QUEUED" ? "API_GATEWAY" : "COMFYUI_PIPELINE";
+    const step = comfyStatus.status === "QUEUED" ? "API_GATEWAY" : "COMFYUI_PIPELINE";
     await prisma.generationJob.update({
       where: { id: job.id },
       data: { currentStep: step as never },
@@ -137,7 +101,6 @@ export async function GET(
     });
   }
 
-  // ── 6b. Failed ────────────────────────────────────────────────────────────
   if (comfyStatus.status === "FAILED") {
     await prisma.$transaction([
       prisma.design.update({
@@ -169,10 +132,7 @@ export async function GET(
     });
   }
 
-  // ── 6c. Completed ─────────────────────────────────────────────────────────
   if (comfyStatus.status === "COMPLETED") {
-    // We expect Node 105 to produce the 2D wrapper, and Node 206 to produce the 3D mockup.
-    // If nodeId is not available or doesn't match, fallback to index-based.
     const wrapperImage = comfyStatus.images.find(img => img.nodeId === "105") ?? comfyStatus.images[0];
     const mockupImage = comfyStatus.images.find(img => img.nodeId === "206") ?? comfyStatus.images[1] ?? comfyStatus.images[0];
 
@@ -185,7 +145,7 @@ export async function GET(
     async function downloadToLocal(comfyUrl: string, suffix: string) {
       try {
         const response = await fetch(comfyUrl);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const buffer = Buffer.from(await response.arrayBuffer());
         const filename = `${design.id}_${suffix}.png`;
         const filepath = path.join(process.cwd(), 'public', 'designs', filename);
@@ -193,8 +153,8 @@ export async function GET(
         await fs.writeFile(filepath, buffer);
         return `/designs/${filename}`;
       } catch (e) {
-        console.error("Failed to download image from ComfyUI", e);
-        return comfyUrl; // Fallback to ComfyUI URL if download fails
+        console.error(e);
+        return comfyUrl;
       }
     }
 
@@ -208,14 +168,11 @@ export async function GET(
     const wrapperUrl = localWrapperUrl || wrapperUrlComfy;
     const imageUrl = localImageUrl || imageUrlComfy;
 
-    // ── Idempotent credit deduction ───────────────────────────────────────
-    // Check if a GENERATION_USAGE transaction already exists for this design
     const existingTx = await prisma.creditTransaction.findFirst({
       where: { userId, referenceId: design.id, type: "GENERATION_USAGE" },
     });
 
     if (!existingTx) {
-      // Deduct credits atomically
       await prisma.$transaction([
         prisma.creditWallet.update({
           where: { userId },
@@ -233,7 +190,6 @@ export async function GET(
       ]);
     }
 
-    // Update Design + Job
     await prisma.$transaction([
       prisma.design.update({
         where: { id: design.id },
@@ -241,7 +197,7 @@ export async function GET(
           status: "COMPLETED",
           imageUrl,
           wrapperUrl,
-          thumbnailUrl: imageUrl, // use same URL for thumbnail for now
+          thumbnailUrl: imageUrl,
         },
       }),
       prisma.generationJob.update({
@@ -268,7 +224,6 @@ export async function GET(
     });
   }
 
-  // Fallback
   return NextResponse.json({
     success: true,
     data: {

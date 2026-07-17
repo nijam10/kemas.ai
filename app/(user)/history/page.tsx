@@ -276,7 +276,7 @@ export default function HistoryPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A3A3A3]" />
             <input
               type="text"
-              placeholder="Search designs..."
+              placeholder="Cari desain..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-white border border-[#E5E4E0] rounded-xl text-sm focus:outline-none focus:border-[#F97316] transition-colors"
@@ -319,7 +319,7 @@ export default function HistoryPage() {
             ) : history.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 <Package className="w-16 h-16 text-[#A3A3A3] mb-4" />
-                <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">No designs yet</h3>
+                <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">Desain tidak ditemukan</h3>
                 <p className="text-sm text-[#737373] mb-6">
                   Generate your first packaging design to see it here.
                 </p>
@@ -327,7 +327,7 @@ export default function HistoryPage() {
                   onClick={() => router.push("/generate")}
                   className="px-6 py-3 border-2 border-[#F97316] text-[#F97316] bg-white rounded-xl font-semibold hover:bg-[#F97316]/5 transition-all"
                 >
-                  Generate your first design
+                  Buat Desain
                 </button>
               </div>
             ) : (

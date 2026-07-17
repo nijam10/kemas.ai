@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import AuthBackground from "@/components/auth/auth-background";
+
+function OAuthErrorAlert() {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("error") === "OAuthSignin") {
+      alert("Login dibatalkan");
+    }
+  }, [searchParams]);
+  return null;
+}
 
 // Google icon SVG (official brand asset)
 function GoogleIcon({ className }: { className?: string }) {
@@ -44,6 +55,9 @@ export default function LoginPage() {
 
   return (
     <div className="relative h-screen overflow-hidden">
+      <Suspense fallback={null}>
+        <OAuthErrorAlert />
+      </Suspense>
       {/* Premium Background System */}
       <AuthBackground />
 
@@ -96,7 +110,7 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full group relative overflow-hidden bg-white hover:bg-[#F5F5F0] border border-[#E5E4E0] rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:border-[#F97316]/40 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full group relative overflow-hidden bg-white hover:bg-[#F5F5F0] border border-[#E5E4E0] rounded-xl p-5 hover:shadow-lg hover:border-[#F97316]/40 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <div className="flex items-center justify-center gap-4">
                 {isLoading ? (

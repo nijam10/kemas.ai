@@ -61,7 +61,10 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleSuspend = (userId: string) => alert(`Suspend ${userId} — API not yet implemented`);
+  const handleSuspend = (userId: string) => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: "SUSPENDED" } : u));
+    alert(`Suspend ${userId} — API not yet implemented`);
+  };
   const handleActivate = (userId: string) => alert(`Activate ${userId} — API not yet implemented`);
   const handleView = (userId: string) => alert(`View ${userId} — API not yet implemented`);
 
@@ -138,7 +141,7 @@ export default function AdminUsersPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button onClick={() => handleView(user.id)} className="p-2 hover:bg-[#F5F5F0] rounded-lg transition-colors" title="View"><Eye className="w-4 h-4 text-[#737373]" /></button>
                           {user.status === "ACTIVE"
-                            ? <button onClick={() => handleSuspend(user.id)} className="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Suspend"><Ban className="w-4 h-4 text-red-600" /></button>
+                            ? <button onClick={() => handleSuspend(user.id)} className="flex items-center gap-1.5 p-2 hover:bg-red-50 rounded-lg text-red-600 text-sm font-medium" title="Suspend"><Ban className="w-4 h-4" /> Suspend Akun</button>
                             : <button onClick={() => handleActivate(user.id)} className="p-2 hover:bg-green-50 rounded-lg transition-colors" title="Activate"><CheckCircle2 className="w-4 h-4 text-green-600" /></button>}
                         </div>
                       </td>

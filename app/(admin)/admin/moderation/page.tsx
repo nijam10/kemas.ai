@@ -181,7 +181,7 @@ export default function AdminModerationPage() {
                       <div className="flex gap-2">
                         <button onClick={() => handleApproveImage(gen.id)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"><CheckCircle2 className="w-4 h-4" />Approve</button>
                         <button onClick={() => handleFlagImage(gen.id)} className="flex items-center justify-center gap-2 px-4 py-2 bg-[#FACC15] text-[#1A1A1A] text-sm font-semibold rounded-lg hover:bg-[#F59E0B] transition-colors"><Flag className="w-4 h-4" /></button>
-                        <button onClick={() => handleRemoveImage(gen.id)} className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleRemoveImage(gen.id)} className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700"><Trash2 className="w-4 h-4" /> Hapus Permanen</button>
                       </div>
                     </div>
                   </div>

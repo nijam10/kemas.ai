@@ -21,7 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 16;
 
 type SortBy = "popular" | "newest" | "most-used";
 
@@ -61,7 +61,7 @@ export default function GalleryPage() {
             gradientFrom: t.gradientFrom,
             gradientTo: t.gradientTo,
             promptPreset: t.promptPreset,
-            styleTags: t.styleTags,
+            styleTags: t.styleTags || [],
             colorMood: t.colorMood,
             badge: t.isFeatured ? "featured" : undefined,
             usageCount: 0, // Fallback, not in schema

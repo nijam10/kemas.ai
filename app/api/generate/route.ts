@@ -7,29 +7,25 @@ import { creditService } from "@/server/services/credit.service";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Auth Check
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 });
     }
     const userId = session.user.id;
 
-    // Verify user still exists in database (handles DB wipes or deleted users)
     const dbUser = await prisma.user.findUnique({ where: { id: userId } });
     if (!dbUser) {
       return NextResponse.json(
-        { success: false, error: "User account no longer exists. Please log out and log in again." }, 
+        { success: false, error: "Account not found" }, 
         { status: 401 }
       );
     }
 
-    // 2. Form Data
     const formData = await request.formData();
     const prompt = formData.get("prompt") as string;
     const packagingType = formData.get("packaging_type") as any || "STANDING_POUCH";
     const productName = formData.get("product_name") as string || "Untitled Design";
     
-    // Map packaging type from frontend to enum
     const packagingTypeEnumMap: Record<string, any> = {
       "standing-pouch": "STANDING_POUCH",
       "pillow-pouch": "PILLOW_POUCH",
@@ -38,11 +34,8 @@ export async function POST(request: NextRequest) {
     };
     const mappedPackagingType = packagingTypeEnumMap[packagingType] || "STANDING_POUCH";
 
-    // 3. Credit Check & Deduction (with automatic daily reset)
-    // dailyResetIfNeeded will auto-create wallet if missing and reset if new day
     let wallet = await creditService.dailyResetIfNeeded(userId);
     
-    // Auto-create wallet for existing users who logged in before the wallet system was added
     if (!wallet) {
       await prisma.creditWallet.create({
         data: { userId, balance: 40, dailyQuota: 40 }
@@ -59,20 +52,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!wallet || wallet.balance < 10) {
-      return NextResponse.json({ success: false, error: "Insufficient credits. You need 10 credits to generate." }, { status: 402 });
+      return NextResponse.json({ success: false, error: "Insufficient credits" }, { status: 402 });
     }
 
     let design, job;
     try {
-      // Execute the deduction and record creation in a single transaction
       const result = await prisma.$transaction(async (tx) => {
-        // Deduct 10 credits
         await tx.creditWallet.update({
           where: { userId },
           data: { balance: { decrement: 10 } }
         });
 
-        // Create Design Record
         const newDesign = await tx.design.create({
           data: {
             userId,
@@ -84,7 +74,6 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        // Create Generation Job Record
         const newJob = await tx.generationJob.create({
           data: {
             userId,
@@ -94,7 +83,6 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        // Create Transaction Log
         await tx.creditTransaction.create({
           data: {
             userId,
@@ -110,11 +98,10 @@ export async function POST(request: NextRequest) {
       design = result.newDesign;
       job = result.newJob;
     } catch (e: any) {
-       console.error("Transaction Error:", e);
-       return NextResponse.json({ success: false, error: "Database transaction failed" }, { status: 500 });
+       console.error(e);
+       return NextResponse.json({ success: false, error: "Transaction failed" }, { status: 500 });
     }
 
-    // 4. Forward to FastAPI (ComfyUI gateway)
     const fastapiUrl = process.env.FASTAPI_URL || "http://localhost:8000";
     if (formData.has("job_id")) formData.delete("job_id");
     formData.append("job_id", design.id);
@@ -131,7 +118,6 @@ export async function POST(request: NextRequest) {
       if (!response.ok) {
         const errorText = await response.text();
         
-        // Refund credits and mark failed if FastAPI rejects the request
         await prisma.$transaction([
           prisma.creditWallet.update({
             where: { userId },
@@ -152,19 +138,18 @@ export async function POST(request: NextRequest) {
           }),
           prisma.generationJob.update({
             where: { id: job.id },
-            data: { status: "FAILED", errorMessage: `FastAPI error: ${errorText}` }
+            data: { status: "FAILED", errorMessage: `API error: ${errorText}` }
           })
         ]);
 
         return NextResponse.json(
-          { success: false, error: `FastAPI error: ${errorText}` },
+          { success: false, error: `API error: ${errorText}` },
           { status: response.status }
         );
       }
 
       const data = await response.json();
 
-      // Update job with prompt_id (runpodJobId)
       await prisma.generationJob.update({
         where: { id: job.id },
         data: { runpodJobId: data.prompt_id }
@@ -178,9 +163,7 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (fetchErr) {
-      // ComfyUI server unreachable (ECONNREFUSED, timeout, etc.)
-      // Refund the credits that were already deducted
-      console.error("ComfyUI connection failed, refunding credits:", fetchErr);
+      console.error(fetchErr);
 
       await prisma.$transaction([
         prisma.creditWallet.update({
@@ -204,20 +187,20 @@ export async function POST(request: NextRequest) {
           where: { id: job.id },
           data: {
             status: "FAILED",
-            errorMessage: "Generation server is not running. Please start ComfyUI first."
+            errorMessage: "Service unavailable"
           }
         })
       ]);
 
       return NextResponse.json(
-        { success: false, error: "Generation server is not running. Please start ComfyUI/FastAPI server first." },
+        { success: false, error: "Service unavailable" },
         { status: 503 }
       );
     }
   } catch (err) {
-    console.error("API Error:", err);
+    console.error(err);
     return NextResponse.json(
-      { success: false, error: err instanceof Error ? err.message : "Internal Server Error" },
+      { success: false, error: "Internal Server Error" },
       { status: 500 }
     );
   }

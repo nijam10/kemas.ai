@@ -4,15 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { PackagingType } from "@prisma/client";
 
-/**
- * GET /api/gallery
- *
- * Returns generated designs from users that are marked as completed.
- *
- * Query params (all optional):
- *   packagingType  — filter by PackagingType enum value
- *   featured       — "true" to return featured/latest designs only
- */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
@@ -64,9 +55,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[GET /api/gallery]", error);
+    console.error(error);
     return NextResponse.json(
-      { success: false, error: "Failed to fetch gallery designs" },
+      { success: false, error: "Failed to fetch gallery" },
       { status: 500 }
     );
   }
