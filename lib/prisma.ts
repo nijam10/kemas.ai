@@ -14,6 +14,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 // Bump this string whenever you run `prisma generate` after a schema change.
 // It forces the singleton to be recreated in the same process (hot-reload safe).
@@ -34,7 +35,8 @@ function createPrismaClient(): PrismaClient {
     });
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
 
   return new PrismaClient({
     adapter,
