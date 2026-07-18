@@ -50,23 +50,22 @@ async def generate_packaging(
     mask: Optional[UploadFile] = File(None)
 ):
     try:
-        logo_filename = None
-        if logo:
-            file_bytes = await logo.read()
-            upload_res = await comfy_client.upload_logo(file_bytes, logo.filename, logo.content_type or "image/png")
-            logo_filename = upload_res.get("name") or upload_res.get("filename") # comfy returns 'name' sometimes
+        import base64
+        # 1x1 transparent PNG
+        empty_png_bytes = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==")
+        
+        async def get_or_upload_fallback(file_obj, default_filename: str):
+            if file_obj:
+                file_bytes = await file_obj.read()
+                upload_res = await comfy_client.upload_logo(file_bytes, file_obj.filename, file_obj.content_type or "image/png")
+                return upload_res.get("name") or upload_res.get("filename")
+            else:
+                upload_res = await comfy_client.upload_logo(empty_png_bytes, default_filename, "image/png")
+                return upload_res.get("name") or upload_res.get("filename")
 
-        barcode_filename = None
-        if barcode:
-            file_bytes = await barcode.read()
-            upload_res = await comfy_client.upload_logo(file_bytes, barcode.filename, barcode.content_type or "image/png")
-            barcode_filename = upload_res.get("name") or upload_res.get("filename")
-
-        mask_filename = None
-        if mask:
-            file_bytes = await mask.read()
-            upload_res = await comfy_client.upload_logo(file_bytes, mask.filename, mask.content_type or "image/png")
-            mask_filename = upload_res.get("name") or upload_res.get("filename")
+        logo_filename = await get_or_upload_fallback(logo, "empty_logo.png")
+        barcode_filename = await get_or_upload_fallback(barcode, "empty_barcode.png")
+        mask_filename = await get_or_upload_fallback(mask, "empty_mask.png")
 
         workflow = build_workflow(
             prompt=prompt,

@@ -133,8 +133,8 @@ export async function GET(
   }
 
   if (comfyStatus.status === "COMPLETED") {
-    const wrapperImage = comfyStatus.images.find(img => img.nodeId === "105") ?? comfyStatus.images[0];
-    const mockupImage = comfyStatus.images.find(img => img.nodeId === "206") ?? comfyStatus.images[1] ?? comfyStatus.images[0];
+    const wrapperImage = comfyStatus.images.find(img => img.nodeId === "120") ?? comfyStatus.images.find(img => img.filename.includes("master_wrapper")) ?? comfyStatus.images[0];
+    const mockupImage = comfyStatus.images.find(img => img.nodeId === "207") ?? comfyStatus.images.find(img => img.filename.includes("front_mockup")) ?? comfyStatus.images[1] ?? comfyStatus.images[0];
 
     const wrapperUrlComfy = wrapperImage ? getImageUrl(wrapperImage) : null;
     const imageUrlComfy = mockupImage ? getImageUrl(mockupImage) : null;
