@@ -55,13 +55,15 @@ async def generate_packaging(
         empty_png_bytes = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==")
         
         async def get_or_upload_fallback(file_obj, default_filename: str):
-            if file_obj:
+            if file_obj and getattr(file_obj, "filename", ""):
                 file_bytes = await file_obj.read()
-                upload_res = await comfy_client.upload_logo(file_bytes, file_obj.filename, file_obj.content_type or "image/png")
-                return upload_res.get("name") or upload_res.get("filename")
-            else:
-                upload_res = await comfy_client.upload_logo(empty_png_bytes, default_filename, "image/png")
-                return upload_res.get("name") or upload_res.get("filename")
+                if len(file_bytes) > 0:
+                    upload_res = await comfy_client.upload_logo(file_bytes, file_obj.filename, file_obj.content_type or "image/png")
+                    return upload_res.get("name") or upload_res.get("filename")
+            
+            # Fallback if no valid file was uploaded
+            upload_res = await comfy_client.upload_logo(empty_png_bytes, default_filename, "image/png")
+            return upload_res.get("name") or upload_res.get("filename")
 
         logo_filename = await get_or_upload_fallback(logo, "empty_logo.png")
         barcode_filename = await get_or_upload_fallback(barcode, "empty_barcode.png")

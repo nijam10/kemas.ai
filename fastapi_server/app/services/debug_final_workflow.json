@@ -23,7 +23,7 @@
   },
   "28": {
     "inputs": {
-      "seed": 369038826970,
+      "seed": 850995500405,
       "steps": 20,
       "cfg": 1,
       "sampler_name": "euler",
@@ -213,7 +213,7 @@
   },
   "201": {
     "inputs": {
-      "text": "Product: Coco Crinkle, Category: Snack, Packaging: pillow-pouch. Visual theme based on: A digital graphic design for a continuous snack packaging , landscape orientation. The background is a clean, solid off-white cream color. The top and bottom edges are framed with , stylized dark brown liquid chocolate splashes. CENTER FRONT PANEL: large bubbly bold brown title \"CHOCO CRINKLE\" centered prominently, with a illustration of cracked chocolate cookies resting on small chocolate chips below. LEFT AND RIGHT OUTER AREAS: reserved for back and side information , keeping enough clean cream space for ingredient text, nutrition facts, brand message, manufacturer information, and barcode. Strictly packaging design, continuous , clean packaging graphic, .. . A realistic 3D stand-up pillow-pouch mockup, front-facing, centered composition, studio product photography, sharp focus, crisp details, everywhere in focus. The pouch features the same visual identity as the flat front design with the large title \"Coco Crinkle\". The bag is a realistic laminated plastic snack pouch with subtle natural wrinkles, sealed top and bottom edges, soft studio lighting, soft shadow on a clean white background, premium professional packaging mockup. Full body, entire pouch completely visible in frame, zoomed out, very wide margin, plenty of negative space around the object, centered, no cropping. Front design only.",
+      "text": "Product: Coco Crinkle, Category: Snack, Packaging: standing-pouch. Visual theme based on: A digital graphic design for a continuous snack packaging , landscape orientation. The background is a clean, solid off-white cream color. The top and bottom edges are framed with , stylized dark brown liquid chocolate splashes. CENTER FRONT PANEL: large bubbly bold brown title \"CHOCO CRINKLE\" centered prominently, with a illustration of cracked chocolate cookies resting on small chocolate chips below. LEFT AND RIGHT OUTER AREAS: reserved for back and side information , keeping enough clean cream space for ingredient text, nutrition facts, brand message, manufacturer information, and barcode. Strictly packaging design, continuous , clean packaging graphic, .. . A realistic 3D stand-up standing-pouch mockup, front-facing, centered composition, studio product photography, sharp focus, crisp details, everywhere in focus. The pouch features the same visual identity as the flat front design with the large title \"Coco Crinkle\". The bag is a realistic laminated plastic snack pouch with subtle natural wrinkles, sealed top and bottom edges, soft studio lighting, soft shadow on a clean white background, premium professional packaging mockup. Full body, entire pouch completely visible in frame, zoomed out, very wide margin, plenty of negative space around the object, centered, no cropping. Front design only.",
       "clip": [
         "26",
         0
@@ -250,7 +250,7 @@
   },
   "204": {
     "inputs": {
-      "seed": 369038825970,
+      "seed": 850995499405,
       "steps": 35,
       "cfg": 1.0,
       "sampler_name": "euler",
