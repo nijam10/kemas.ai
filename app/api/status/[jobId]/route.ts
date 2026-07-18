@@ -46,7 +46,12 @@ export async function GET(
     }
 
     // 3. Proxy to FastAPI to get live status
-    const response = await fetch(`http://localhost:8000/status/${jobId}`);
+    const fastapiUrl = process.env.FASTAPI_URL || "http://localhost:8000";
+    const response = await fetch(`${fastapiUrl}/status/${jobId}`, {
+      headers: {
+        "ngrok-skip-browser-warning": "69420",
+      }
+    });
     
     if (!response.ok) {
       const errorText = await response.text();
