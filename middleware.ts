@@ -20,6 +20,11 @@ export async function middleware(req: NextRequest) {
   }
   
   const pathname = req.nextUrl.pathname;
+
+  // Mencegah user yang sudah login mengakses halaman login (menghindari account linking tidak disengaja)
+  if (isLoggedIn && pathname === '/login') {
+    return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+  }
   
   const isProtectedRoute = 
     pathname.startsWith('/dashboard') || 
