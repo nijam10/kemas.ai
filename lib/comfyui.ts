@@ -31,7 +31,10 @@ function getClientId(): string {
 }
 
 function buildHeaders(extra?: Record<string, string>): HeadersInit {
-  const headers: Record<string, string> = { ...(extra ?? {}) };
+  const headers: Record<string, string> = { 
+    "ngrok-skip-browser-warning": "69420",
+    ...(extra ?? {}) 
+  };
   const key = process.env.COMFYUI_API_KEY;
   if (key) headers["Authorization"] = `Bearer ${key}`;
   return headers;
