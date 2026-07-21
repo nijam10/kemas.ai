@@ -19,23 +19,6 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    const publishedDesigns = await prisma.design.findMany({
-      where: {
-        status: "COMPLETED",
-        imageUrl: { not: null },
-        isPublished: true,
-        ...(packagingType && packagingType !== "all" && { packagingType }),
-        ...(featuredOnly && { isSaved: true }),
-      },
-      include: {
-        user: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: featuredOnly ? 8 : 50,
-    });
-
     const mappedOfficial = officialTemplates.map(t => ({
       id: t.id,
       title: t.title,
@@ -52,31 +35,11 @@ export async function GET(request: NextRequest) {
       isFeatured: t.isFeatured,
       createdAt: t.createdAt,
       user: {
-        name: "Kemas.ai Official",
+        name: t.styleTags?.includes("User Published") ? "Community User" : "Kemas.ai Official",
       }
     }));
 
-    const mappedUserDesigns = publishedDesigns.map(d => ({
-      id: d.id,
-      title: d.title,
-      category: "MODERN_MINIMAL",
-      packagingType: d.packagingType,
-      previewImageUrl: d.thumbnailUrl || d.imageUrl,
-      gradientFrom: null,
-      gradientTo: null,
-      promptPreset: d.prompt,
-      colorMood: "warm",
-      styleTags: ["community"],
-      description: d.prompt,
-      colorPalette: [],
-      isFeatured: d.isSaved,
-      createdAt: d.createdAt,
-      user: {
-        name: d.user?.name || "Community User",
-      }
-    }));
-
-    const allTemplates = [...mappedOfficial, ...mappedUserDesigns];
+    const allTemplates = [...mappedOfficial];
     // Sort by newest overall
     allTemplates.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
