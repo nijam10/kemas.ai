@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
       folder_type: folderType
     };
 
-    const response = await fetch("http://localhost:8000/upscale", {
+    const fastapiUrl = process.env.FASTAPI_URL || "http://localhost:8000";
+    const response = await fetch(`${fastapiUrl}/upscale`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

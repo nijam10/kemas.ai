@@ -427,6 +427,24 @@ function ProcessingScreen({ isDownloadingAssets }: { isDownloadingAssets?: boole
 function FinalResultScreen({ masterWrapperUrl, mockup3dUrl, onNewDesign, jobId }: any) {
   const [isUpscaling, setIsUpscaling] = useState(false);
 
+  const forceDownload = async (url: string, filename: string) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Failed to download via fetch, falling back to open tab", err);
+      window.open(url, '_blank');
+    }
+  };
+
   const handleDownload2D = async () => {
     if (!masterWrapperUrl) return;
     setIsUpscaling(true);
@@ -455,12 +473,7 @@ function FinalResultScreen({ masterWrapperUrl, mockup3dUrl, onNewDesign, jobId }
           setIsUpscaling(false);
           // Trigger download
           if (statusData.data.master_wrapper_url) {
-            const link = document.createElement('a');
-            link.href = statusData.data.master_wrapper_url;
-            link.download = `upscaled_2d_${filename}`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            await forceDownload(statusData.data.master_wrapper_url, `upscaled_2d_${filename}`);
           }
         } else if (statusData.data?.status === "failed") {
           clearInterval(pollInterval);
@@ -475,14 +488,9 @@ function FinalResultScreen({ masterWrapperUrl, mockup3dUrl, onNewDesign, jobId }
     }
   };
 
-  const handleDownload3D = () => {
+  const handleDownload3D = async () => {
     if (!mockup3dUrl) return;
-    const link = document.createElement('a');
-    link.href = mockup3dUrl;
-    link.download = '3d_mockup.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    await forceDownload(mockup3dUrl, '3d_mockup.png');
   };
 
   return (
