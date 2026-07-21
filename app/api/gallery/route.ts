@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
       where: {
         status: "COMPLETED",
         imageUrl: { not: null },
+        isPublished: true,
         ...(packagingType && packagingType !== "all" && { packagingType }),
         ...(featuredOnly && { isSaved: true }),
       },
