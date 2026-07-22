@@ -69,28 +69,21 @@ export async function GET(
        let wrapperUrl = data.data.master_wrapper_url;
        let imageUrl = data.data.front_mockup_url;
 
-       // Download images locally so they survive server restarts
-       const fs = require('fs');
-       const path = require('path');
-       
-       async function downloadToLocal(remoteUrl: string, suffix: string) {
+       async function downloadToBase64(remoteUrl: string): Promise<string> {
          try {
            const res = await fetch(remoteUrl);
            if (!res.ok) return remoteUrl;
            const buffer = Buffer.from(await res.arrayBuffer());
-           const filename = `${design.id}_${suffix}.png`;
-           const filepath = path.join(process.cwd(), 'public', 'designs', filename);
-           await fs.promises.mkdir(path.dirname(filepath), { recursive: true });
-           await fs.promises.writeFile(filepath, buffer);
-           return `/designs/${filename}`;
+           const base64 = buffer.toString('base64');
+           return `data:image/png;base64,${base64}`;
          } catch (e) {
-           console.error("Failed to download image:", e);
+           console.error("Failed to download image to base64:", e);
            return remoteUrl;
          }
        }
 
-       if (wrapperUrl) wrapperUrl = await downloadToLocal(wrapperUrl, 'wrapper');
-       if (imageUrl) imageUrl = await downloadToLocal(imageUrl, 'mockup');
+       if (wrapperUrl) wrapperUrl = await downloadToBase64(wrapperUrl);
+       if (imageUrl) imageUrl = await downloadToBase64(imageUrl);
 
        await prisma.$transaction([
          prisma.design.update({
