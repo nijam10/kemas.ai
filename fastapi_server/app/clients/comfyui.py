@@ -51,7 +51,7 @@ class ComfyUIClient:
             return response.json()
 
     def get_image_url(self, filename: str, subfolder: str, folder_type: str) -> str:
-        # Construct URL to proxy through FastAPI to bypass ngrok warnings
-        return f"http://localhost:8000/view?filename={filename}&subfolder={subfolder}&type={folder_type}"
+        # Use relative Next.js proxy route to bypass ngrok warnings and HTTPS mixed content issues
+        return f"/api/image?filename={filename}&subfolder={subfolder}&type={folder_type}"
 
 comfy_client = ComfyUIClient()

@@ -33,7 +33,7 @@ export default function SiteFooter() {
     <footer className="bg-[#1A1A1A] border-t border-[#27272a] relative overflow-hidden">
       {/* Subtle top glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-[#F97316]/30 to-transparent" />
-      
+
       <div className="max-w-7xl mx-auto px-6 py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-16 lg:gap-10">
           {/* Brand Section */}
@@ -51,7 +51,7 @@ export default function SiteFooter() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm text-[#a1a1aa]">
                 <MapPin className="w-4 h-4 text-[#F97316]" />
-                <span>Jakarta, Indonesia</span>
+                <span>Batam, Indonesia</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-[#a1a1aa]">
                 <Mail className="w-4 h-4 text-[#F97316]" />
