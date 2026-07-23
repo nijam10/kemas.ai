@@ -69,21 +69,46 @@ export async function GET(
        let wrapperUrl = data.data.master_wrapper_url;
        let imageUrl = data.data.front_mockup_url;
 
-       async function downloadToBase64(remoteUrl: string): Promise<string> {
+       // Helper to upload image to Supabase Storage
+       async function downloadToSupabase(remoteUrl: string, fileName: string): Promise<string> {
          try {
            const res = await fetch(remoteUrl);
            if (!res.ok) return remoteUrl;
+           
            const buffer = Buffer.from(await res.arrayBuffer());
-           const base64 = buffer.toString('base64');
-           return `data:image/png;base64,${base64}`;
+           
+           // Import Supabase client dynamically to avoid issues at top level
+           const { supabaseServer } = await import('@/lib/supabase');
+           
+           // Upload to 'designs' bucket
+           const { data: uploadData, error } = await supabaseServer
+             .storage
+             .from('designs')
+             .upload(`${userId}/${jobId}_${fileName}.png`, buffer, {
+               contentType: 'image/png',
+               upsert: true
+             });
+             
+           if (error) {
+             console.error("Supabase upload error:", error);
+             return remoteUrl; // fallback to original URL if upload fails
+           }
+           
+           // Get the public URL
+           const { data: publicUrlData } = supabaseServer
+             .storage
+             .from('designs')
+             .getPublicUrl(uploadData.path);
+             
+           return publicUrlData.publicUrl;
          } catch (e) {
-           console.error("Failed to download image to base64:", e);
+           console.error("Failed to upload image to Supabase:", e);
            return remoteUrl;
          }
        }
 
-       if (wrapperUrl) wrapperUrl = await downloadToBase64(wrapperUrl);
-       if (imageUrl) imageUrl = await downloadToBase64(imageUrl);
+       if (wrapperUrl) wrapperUrl = await downloadToSupabase(wrapperUrl, 'wrapper');
+       if (imageUrl) imageUrl = await downloadToSupabase(imageUrl, 'mockup');
 
        await prisma.$transaction([
          prisma.design.update({
