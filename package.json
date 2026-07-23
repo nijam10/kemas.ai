@@ -16,7 +16,9 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:load": "locust -f tests/performance/locustfile.py --host=http://localhost:8000 --users 50 --spawn-rate 5 --run-time 1m --headless",
+    "test:load-ui": "locust -f tests/performance/locustfile.py --host=http://localhost:8000"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
