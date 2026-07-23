@@ -48,8 +48,15 @@ async def generate_packaging(
     logo: Optional[UploadFile] = File(None),
     barcode: Optional[UploadFile] = File(None),
     mask: Optional[UploadFile] = File(None)
+    test_mode: Optional[str] = Form(None)
 ):
     try:
+        if test_mode == "true":
+            # Bypassing ComfyUI completely for Load Testing demo
+            import asyncio
+            await asyncio.sleep(0.5) # Simulate slight processing delay
+            return GenerateResponse(success=True, job_id=job_id, status="QUEUED", prompt_id="test_prompt_123")
+
         import base64
         # 1x1 transparent PNG
         empty_png_bytes = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==")

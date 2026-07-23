@@ -25,7 +25,8 @@ class KemasAIUser(HttpUser):
             "nutrition_fact": "Calories 0, Fat 0g",
             "brand_message": "Sustainable and Organic",
             "manufacturer_info": "Kemas.AI Roasters",
-            "text_color_hex": "#FFFFFF"
+            "text_color_hex": "#FFFFFF",
+            "test_mode": "true"
         }
         
         # Files are optional, but we must send multipart/form-data
