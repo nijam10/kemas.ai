@@ -116,8 +116,32 @@ export default function HistoryPage() {
   // ── Fetch from API ────────────────────────────────────────────────────────
   const { data, loading } = useDesigns();
   const history = useMemo(() => {
-    return (data?.designs ?? []).map(toDisplayItem);
-  }, [data]);
+    let result = (data?.designs ?? []).map(toDisplayItem);
+
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(item => 
+        item.name.toLowerCase().includes(q) || 
+        item.prompt.toLowerCase().includes(q)
+      );
+    }
+
+    if (filterType !== "all") {
+      // the value in packagingTypes is 'standing-pouch', 'box', etc.
+      // the display item type is 'Standing Pouch', 'Box', etc.
+      result = result.filter(item => item.type.toLowerCase() === filterType.replace('-', ' ').toLowerCase());
+    }
+
+    if (sortBy === "oldest") {
+      result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    } else if (sortBy === "most-downloaded") {
+      result.sort((a, b) => b.downloads - a.downloads);
+    } else {
+      result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+
+    return result;
+  }, [data, searchQuery, filterType, sortBy]);
 
   const totalDesigns = data?.total ?? history.length;
   const totalDownloads = history.reduce((sum, item) => sum + item.downloads, 0);

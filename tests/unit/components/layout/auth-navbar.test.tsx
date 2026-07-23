@@ -36,4 +36,45 @@ describe('AuthNavbar', () => {
     // Should not see Login button
     expect(screen.queryByRole('link', { name: /login/i })).not.toBeInTheDocument()
   })
+
+  it('TC-001: Menampilkan indikator saldo awal (40 credits)', () => {
+    vi.mocked(useSession).mockReturnValue({
+      data: { user: { name: 'Test User', email: 'test@example.com', role: 'USER' } },
+      status: 'authenticated',
+      update: vi.fn()
+    } as any)
+
+    render(<AuthNavbar />)
+    expect(screen.getByText(/40/)).toBeInTheDocument()
+    expect(screen.getByText(/credits/i)).toBeInTheDocument()
+  })
+
+  it('TC-020: Menerima aksi klik Logout dan memanggil fungsi signOut untuk menghapus sesi', async () => {
+    vi.mocked(useSession).mockReturnValue({
+      data: { user: { name: 'Test User', email: 'test@example.com', role: 'USER' } },
+      status: 'authenticated',
+      update: vi.fn()
+    } as any)
+
+    const { signOut } = await import('next-auth/react')
+    
+    render(<AuthNavbar />)
+    
+    // Tombol menu menampilkan initial 'T' (dari Test User)
+    const userMenuButton = screen.getByText('T')
+    expect(userMenuButton).toBeInTheDocument()
+    
+    import('@testing-library/react').then(async ({ fireEvent, waitFor }) => {
+      // Klik trigger dropdown
+      fireEvent.click(userMenuButton)
+      
+      // Tunggu animasi / render dropdown lalu klik Log out
+      await waitFor(() => {
+        const logoutItem = screen.getByText(/Log out/i)
+        fireEvent.click(logoutItem)
+      })
+      
+      expect(signOut).toHaveBeenCalledWith({ callbackUrl: '/' })
+    })
+  })
 })

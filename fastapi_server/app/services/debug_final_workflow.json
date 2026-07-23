@@ -23,7 +23,7 @@
   },
   "28": {
     "inputs": {
-      "seed": 855749996486,
+      "seed": 668174543236,
       "steps": 20,
       "cfg": 1,
       "sampler_name": "euler",
@@ -53,7 +53,7 @@
   },
   "29": {
     "inputs": {
-      "text": "Product: Keripik Tempe, Category: Snack. User Visual Prompt: A single-frame flat 2D digital graphic design layout for a continuous snack packaging wrapper, landscape orientation. The background is a clean, solid warm golden yellow color. The top and bottom edges are framed with flat, stylized green banana leaf patterns. CENTER FRONT PANEL: large bubbly bold dark brown title \"KERIPIK TEMPE\" centered prominently, with a flat 2D illustration of crispy, golden-brown sliced tempeh chips resting on a small traditional woven plate. LEFT AND RIGHT OUTER AREAS: reserved for back and side information layout, keeping enough clean golden space for ingredient text, nutrition facts, brand message, manufacturer information, and barcode. Strictly flat orthographic packaging design, seamless continuous wrapper layout, clean packaging graphic, pure 2D digital art.. . IMPORTANT: THIS IS A DIGITAL PRINT FILE, NOT A PHYSICAL MOCKUP. DO NOT DRAW A BAG OR POUCH. A fully unrolled, continuous flat 2D vector graphic design layout canvas, landscape orientation. CENTER FRONT PANEL: large bold title \"Keripik Tempe\" centered prominently. LEFT AND RIGHT OUTER AREAS: reserved for back and side information layout. Strictly flat orthographic design, pure 2D digital art, NO 3D elements, NO perspective, NO physical objects.",
+      "text": "Product: Keripik Dodol, Category: Beverages. User Visual Prompt: Flat 2D continuous packaging wrapper layout for dodol chips. Pop-art style with bold comic-book dots in vivid orange and blue. Loud, retro typography \"Keripik Dodol\". Stylized illustration of sweet chips. Eye-catching and vibrant. Well-organized empty side spaces for barcode and product description.. . IMPORTANT: THIS IS A DIGITAL PRINT FILE, NOT A PHYSICAL MOCKUP. DO NOT DRAW A BAG OR POUCH. A fully unrolled, continuous flat 2D vector graphic design layout canvas, landscape orientation. CENTER FRONT PANEL: large bold title \"Keripik Dodol\" centered prominently. LEFT AND RIGHT OUTER AREAS: reserved for back and side information layout. Strictly flat orthographic design, pure 2D digital art, NO 3D elements, NO perspective, NO physical objects.",
       "clip": [
         "26",
         0
@@ -140,7 +140,7 @@
   },
   "57": {
     "inputs": {
-      "image": "logo-removebg-preview.png"
+      "image": "empty_logo.png"
     },
     "class_type": "LoadImage",
     "_meta": {
@@ -158,7 +158,7 @@
   },
   "100": {
     "inputs": {
-      "image": "barcode1.jpg"
+      "image": "empty_barcode.png"
     },
     "class_type": "LoadImage",
     "_meta": {
@@ -213,7 +213,7 @@
   },
   "201": {
     "inputs": {
-      "text": "Product: Keripik Tempe, Category: Snack, Packaging: standing-pouch. Visual theme based on: A digital graphic design for a continuous snack packaging , landscape orientation. The background is a clean, solid warm golden yellow color. The top and bottom edges are framed with , stylized green banana leaf patterns. CENTER FRONT PANEL: large bubbly bold dark brown title \"KERIPIK TEMPE\" centered prominently, with a illustration of crispy, golden-brown sliced tempeh chips resting on a small traditional woven plate. LEFT AND RIGHT OUTER AREAS: reserved for back and side information , keeping enough clean golden space for ingredient text, nutrition facts, brand message, manufacturer information, and barcode. Strictly packaging design, continuous , clean packaging graphic, .. . A realistic 3D stand-up standing-pouch mockup, front-facing, centered composition, studio product photography, sharp focus, crisp details, everywhere in focus. The pouch features the same visual identity as the flat front design with the large title \"Keripik Tempe\". The bag is a realistic laminated plastic snack pouch with subtle natural wrinkles, sealed top and bottom edges, soft studio lighting, soft shadow on a clean white background, premium professional packaging mockup. Full body, entire pouch completely visible in frame, zoomed out, very wide margin, plenty of negative space around the object, centered, no cropping. Front design only.",
+      "text": "Product: Keripik Dodol, Category: Beverages, Packaging: standing-pouch. Visual theme based on: continuous packaging for dodol chips. Pop-art style with bold comic-book dots in vivid orange and blue. Loud, retro typography \"Keripik Dodol\". Stylized illustration of sweet chips. Eye-catching and vibrant. Well-organized empty side spaces for barcode and product description.. . A realistic 3D stand-up standing-pouch mockup, front-facing, centered composition, studio product photography, sharp focus, crisp details, everywhere in focus. The pouch features the same visual identity as the flat front design with the large title \"Keripik Dodol\". The bag is a realistic laminated plastic snack pouch with subtle natural wrinkles, sealed top and bottom edges, soft studio lighting, soft shadow on a clean white background, premium professional packaging mockup. Full body, entire pouch completely visible in frame, zoomed out, very wide margin, plenty of negative space around the object, centered, no cropping. Front design only.",
       "clip": [
         "26",
         0
@@ -250,7 +250,7 @@
   },
   "204": {
     "inputs": {
-      "seed": 855749995486,
+      "seed": 668174542236,
       "steps": 35,
       "cfg": 1.0,
       "sampler_name": "euler",
