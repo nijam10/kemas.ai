@@ -47,7 +47,7 @@ async def generate_packaging(
     seed: Optional[int] = Form(None),
     logo: Optional[UploadFile] = File(None),
     barcode: Optional[UploadFile] = File(None),
-    mask: Optional[UploadFile] = File(None)
+    mask: Optional[UploadFile] = File(None),
     test_mode: Optional[str] = Form(None)
 ):
     try:

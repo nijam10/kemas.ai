@@ -16,14 +16,6 @@ const nextConfig: any = {
       },
     ],
   },
-  // Memaksa Vercel mengabaikan error ESLint saat proses build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  // Memaksa Vercel mengabaikan error TypeScript saat proses build
-  typescript: {
-    ignoreBuildErrors: true,
-  },
 };
 
 export default nextConfig;

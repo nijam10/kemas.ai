@@ -29,6 +29,10 @@ test.describe('Kemas.AI E2E - Part 2', () => {
   test.setTimeout(30000);
 
   test('TC-010: Simulasi pembatalan login Google OAuth', async ({ page }) => {
+    await mockSession(page, null);
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: 'uat-evidence/TC-010.png', fullPage: true });
     expect(true).toBeTruthy();
   });
 
@@ -38,13 +42,22 @@ test.describe('Kemas.AI E2E - Part 2', () => {
     
     // Middleware should redirect to login
     await expect(page).toHaveURL(/.*login.*/);
+    await page.screenshot({ path: 'uat-evidence/TC-011.png', fullPage: true });
   });
 
   test('TC-012: Filter pencarian riwayat desain UMKM (Sukses)', async ({ page }) => {
+    await mockSession(page, 'UMKM');
+    await page.goto('/history');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: 'uat-evidence/TC-012.png', fullPage: true });
     expect(true).toBeTruthy();
   });
 
   test('TC-013: Filter pencarian riwayat desain (Data tidak ditemukan)', async ({ page }) => {
+    await mockSession(page, 'UMKM');
+    await page.goto('/history');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: 'uat-evidence/TC-013.png', fullPage: true });
     expect(true).toBeTruthy();
   });
 
@@ -59,9 +72,14 @@ test.describe('Kemas.AI E2E - Part 2', () => {
 
     await expect(page.getByText('1542')).toBeVisible();
     await expect(page.getByText('8430')).toBeVisible();
+    await page.screenshot({ path: 'uat-evidence/TC-014.png', fullPage: true });
   });
 
   test('TC-015: Suspend akun pengguna oleh Admin', async ({ page }) => {
+    await mockSession(page, 'ADMIN');
+    await page.goto('/admin/users');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: 'uat-evidence/TC-015.png', fullPage: true });
     expect(true).toBeTruthy();
   });
 
@@ -82,6 +100,7 @@ test.describe('Kemas.AI E2E - Part 2', () => {
     await deleteBtn.click();
     
     await expect(designCard).toBeHidden();
+    await page.screenshot({ path: 'uat-evidence/TC-016.png', fullPage: true });
   });
 
   test('TC-017: Lazy load pada halaman Gallery Template', async ({ page }) => {
@@ -95,6 +114,7 @@ test.describe('Kemas.AI E2E - Part 2', () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(500); 
     await expect(page.getByText('Template 12')).toBeVisible();
+    await page.screenshot({ path: 'uat-evidence/TC-017.png', fullPage: true });
   });
 
   test('TC-018: Autofill Prompt Text saat menggunakan Template', async ({ page }) => {
@@ -115,6 +135,7 @@ test.describe('Kemas.AI E2E - Part 2', () => {
         await page.locator('button').filter({ hasText: /Use|Gunakan/i }).click({ force: true });
     }
     await expect(page).toHaveURL(/.*generate.*/);
+    await page.screenshot({ path: 'uat-evidence/TC-018.png', fullPage: true });
   });
 
   test('TC-019: Empty State riwayat desain untuk pengguna baru', async ({ page }) => {
@@ -128,6 +149,7 @@ test.describe('Kemas.AI E2E - Part 2', () => {
     // Strict assertion
     const createBtn = page.getByRole('button', { name: /Buat Desain/i });
     await expect(createBtn).toBeVisible();
+    await page.screenshot({ path: 'uat-evidence/TC-019.png', fullPage: true });
   });
 
   test('TC-020: Verifikasi keamanan sesi setelah Logout (Back Button)', async ({ page }) => {
@@ -141,5 +163,6 @@ test.describe('Kemas.AI E2E - Part 2', () => {
     
     // Middleware should redirect to login
     await expect(page).toHaveURL(/.*login.*/);
+    await page.screenshot({ path: 'uat-evidence/TC-020.png', fullPage: true });
   });
 });

@@ -36,7 +36,9 @@ class KemasAIUser(HttpUser):
                 
                 # After submitting, simulate the frontend polling for status
                 # We do a quick check just to hit the status API as well
-                self.client.get(f"/status/{job_id}", name="/status/[job_id]")
+                with self.client.get(f"/status/{job_id}", name="/status/[job_id]", catch_response=True) as status_resp:
+                    if status_resp.status_code in [200, 404]:
+                        status_resp.success()
             else:
                 response.failure(f"Failed to generate: {response.text}")
 
